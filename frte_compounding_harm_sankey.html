@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NIST FRTE — Compounding Harm Feedback Loop</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #ffffff;
+      --bg-secondary: #f5f4f0;
+      --text-primary: #1a1a18;
+      --text-secondary: #5f5e5a;
+      --text-tertiary: #888780;
+      --border: rgba(0,0,0,0.12);
+      --border-mid: rgba(0,0,0,0.2);
+      --blue: #185FA5;
+      --font: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --font-mono: "SFMono-Regular", "Consolas", "Liberation Mono", monospace;
+      --radius-md: 8px;
+      --radius-lg: 12px;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #1e1e1c;
+        --bg-secondary: #2c2c2a;
+        --text-primary: #e8e6df;
+        --text-secondary: #b4b2a9;
+        --text-tertiary: #888780;
+        --border: rgba(255,255,255,0.1);
+        --border-mid: rgba(255,255,255,0.2);
+        --blue: #5b9fd4;
+      }
+    }
+
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text-primary);
+      line-height: 1.6;
+      padding: 2rem 1rem;
+    }
+
+    .container { max-width: 860px; margin: 0 auto; }
+
+    header {
+      border-bottom: 0.5px solid var(--border-mid);
+      padding-bottom: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .eyebrow {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-tertiary);
+      margin-bottom: 0.5rem;
+    }
+
+    h1 { font-size: 22px; font-weight: 500; margin-bottom: 0.5rem; }
+
+    .subtitle {
+      font-size: 14px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      max-width: 680px;
+    }
+
+    .explainer {
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 1rem 1.25rem;
+      background: var(--bg-secondary);
+      margin-bottom: 2rem;
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.7;
+    }
+
+    .explainer strong { color: var(--text-primary); font-weight: 500; }
+
+    .diagram-wrap { width: 100%; margin-bottom: 1rem; }
+
+    .node-btn { cursor: pointer; }
+    .node-btn rect { transition: opacity 0.12s; }
+    .node-btn:hover rect { opacity: 0.82; }
+
+    .cite-box {
+      background: var(--bg-secondary);
+      border: 0.5px solid var(--border-mid);
+      border-radius: var(--radius-lg);
+      padding: 1rem 1.25rem;
+      font-size: 13px;
+      line-height: 1.7;
+      min-height: 80px;
+      color: var(--text-secondary);
+      margin-bottom: 2rem;
+    }
+
+    .cite-box strong { color: var(--text-primary); font-weight: 500; }
+    .cite-stat { font-family: var(--font-mono); font-size: 14px; font-weight: 500; color: var(--text-primary); }
+    .cite-source { font-size: 11px; color: var(--text-tertiary); margin-top: 4px; display: block; }
+
+    footer {
+      border-top: 0.5px solid var(--border);
+      padding-top: 1rem;
+      margin-top: 1rem;
+      font-size: 11px;
+      color: var(--text-tertiary);
+      line-height: 1.7;
+    }
+
+    footer a { color: var(--blue); text-decoration: none; }
+    footer a:hover { text-decoration: underline; }
+
+    @media (max-width: 600px) {
+      h1 { font-size: 18px; }
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <div class="eyebrow">Structural analysis · Chapter 3: Facial Recognition as Racial Recognition</div>
+    <h1>Compounding harm: the closed feedback loop</h1>
+    <p class="subtitle">
+      Racially biased policing does not merely predate algorithmic surveillance — it actively produces the conditions
+      that make algorithmic surveillance more harmful. Click any node to see the supporting statistic and source.
+    </p>
+  </header>
+
+  <div class="explainer">
+    <strong>What this shows:</strong> Each node in this loop is documented independently in the literature.
+    Together they form a self-reinforcing system: disparate policing produces skewed data, skewed data produces biased
+    algorithms, biased algorithms produce more false leads in over-policed communities, false leads produce more arrests,
+    more arrests produce more skewed data. The NIST FMR disparities documented in visualizations 1–4 are one node
+    in this loop — not a self-contained technical failure.
+    <br><br>
+    <strong>Methodological note:</strong> Causal arrows represent relationships documented across multiple peer-reviewed
+    sources. This is not an experimentally established direct causal chain; it is a structural argument grounded in
+    documented co-occurrence and mechanism. See footer citations.
+  </div>
+
+  <div class="diagram-wrap">
+    <svg width="100%" viewBox="0 0 680 560" role="img">
+      <title>Compounding harm feedback loop diagram</title>
+      <desc>Six nodes arranged in a clockwise loop: racially biased policing leads to skewed mugshot databases, which become biased training data, which produces elevated false match rates for Black and Brown faces, which generates false investigative leads, which drives more stops and arrests, which feeds back into the first node. Two additional blue nodes show external data inputs: 641 million DMV photos and cannabis arrest disparity statistics.</desc>
+
+      <defs>
+        <marker id="arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </marker>
+      </defs>
+
+      <text x="340" y="22" text-anchor="middle" style="font-size:11px;font-weight:500;letter-spacing:0.06em;fill:#888780;font-family:-apple-system,sans-serif;text-transform:uppercase;">Feedback loop — click any node for source</text>
+
+      <!-- NODE 1: Racially biased policing -->
+      <g class="node-btn" onclick="showCite(0)" aria-label="Racially biased policing node">
+        <rect x="20" y="42" width="160" height="68" rx="8" fill="#FCEBEB" stroke="#A32D2D" stroke-width="0.5"/>
+        <text x="100" y="66" text-anchor="middle" style="font-size:13px;font-weight:500;fill:#791F1F;font-family:-apple-system,sans-serif;">Racially biased</text>
+        <text x="100" y="82" text-anchor="middle" style="font-size:13px;font-weight:500;fill:#791F1F;font-family:-apple-system,sans-serif;">policing</text>
+        <text x="100" y="100" text-anchor="middle" style="font-size:11px;fill:#A32D2D;font-family:-apple-system,sans-serif;">5× more stops</text>
+      </g>
+
+      <!-- FLOW 1 → 2 -->
+      <path d="M180 76 C225 76 225 76 260 76" fill="none" stroke="#A32D2D" stroke-width="2" marker-end="url(#arr)" opacity="0.45"/>
+      <text x="220" y="68" text-anchor="middle" style="font-size:10px;fill:#888780;font-family:-apple-system,sans-serif;">arrests →</text>
+      <text x="220" y="90" text-anchor="middle" style="font-size:10px;fill:#888780;font-family:-apple-system,sans-serif;">mugshots</text>
+
+      <!-- NODE 2: Skewed mugshot databases -->
+      <g class="node-btn" onclick="showCite(1)" aria-label="Skewed mugshot databases node">
+        <rect x="260" y="42" width="160" height="68" rx="8" fill="#FAEEDA" stroke="#854F0B" stroke-width="0.5"/>
+        <text x="340" y="66" text-anchor="middle" style="font-size:13px;font-weight:500;fill:#633806;font-family:-apple-system,sans-serif;">Skewed mugshot</text>
+        <text x="340" y="82" text-anchor="middle" style="font-size:13px;font-weight:500;fill:#633806;font-family:-apple-system,sans-serif;">databases</text>
+        <text x="340" y="100" text-anchor="middle" style="font-size:11px;fill:#854F0B;font-family:-apple-system,sans-serif;">56% Black/Latino</text>
+      </g>
+
+      <!-- FLOW 2 → 3 -->
+      <path d="M420 76 C462 76 462 76 500 76" fill="none" stroke="#854F0B" stroke-width="2" marker-end="url(#arr)" opacity="0.45"/>
+      <text x="460" y="68" text-anchor="middle" style="font-size:10px;fill:#888780;font-family:-apple-system,sans-serif;">become</text>
+      <text x="460" y="90" text-anchor="middle" style="font-size:10px;fill:#888780;font-family:-apple-system,sans-serif;">training data</text>
+
+      <!-- NODE 3: Biased training data -->
+      <g class="node-btn" onclick="showCite(2)" aria-label="Biased training data node">
+        <rect x="500" y="42" width="160" height="68" rx="8" fill="#FAEEDA" stroke="#854F0B" stroke-width="0.5"/>
+        <text x="580" y="62" text-anchor="middle" style="font-size:13px;font-weight:500;fill:#633806;font-family:-apple-system,sans-serif;">Biased</text>
+        <text x="580" y="78" text-anchor="middle" style="font-size:13px;font-weight:500;fill:#633806;font-family:-apple-system,sans-serif;">training data</text>
+        <text x="580" y="96" text-anchor="middle" style="font-size:11px;fill:#854F0B;font-family:-apple-system,sans-serif;">79–86% lighter-skinned</text>
+      </g>
+
+      <!-- FLOW 3 → 4 (down right side) -->
+      <path d="M580 110 C580 195 580 195 580 240" fill="none" stroke="#854F0B" stroke-width="2" marker-end="url(#arr)" opacity="0.45"/>
+      <text x="612" y="178" text-anchor="start" style="font-size:10px;fill:#888780;font-family:-apple-system,sans-serif;">learns</text>
+      <text x="612" y="192" text-anchor="start" style="font-size:10px;fill:#888780;font-family:-apple-system,sans-serif;">disparity</text>
+
+      <!-- NODE 4: Elevated FMR -->
+      <g class="node-btn" onclick="showCite(3)" aria-label="Elevated false match rate node">
+        <rect x="500" y="240" width="160" height="68" rx="8" fill="#FCEBEB" stroke="#A32D2D" stroke-width="0.5"/>
+        <text x="580" y="262" text-anchor="middle" style="font-size:13px;font-weight:500;fill:#791F1F;font-family:-apple-system,sans-serif;">Elevated FMR</text>
+        <text x="580" y="278" text-anchor="middle" style="font-size:13px;font-weight:500;fill:#791F1F;font-family:-apple-system,sans-serif;">for Black/Brown faces</text>
+        <text x="580" y="296" text-anchor="middle" style="font-size:11px;fill:#A32D2D;font-family:-apple-system,sans-serif;">up to 1,878× disparity</text>
+      </g>
+
+      <!-- FLOW 4 → 5 -->
+      <path d="M500 274 C458 274 458 274 420 274" fill="none" stroke="#A32D2D" stroke-width="2" marker-end="url(#arr)" opacity="0.45"/>
+      <text x="460" y="266" text-anchor="middle" style="font-size:10px;fill:#888780;font-family:-apple-system,sans-serif;">produces</text>
+      <text x="460" y="288" text-anchor="middle" style="font-size:10px;fill:#888780;font-family:-apple-system,sans-serif;">false leads</text>
+
+      <!-- NODE 5: False investigative leads -->
+      <g class="node-btn" onclick="showCite(4)" aria-label="False investigative leads node">
+        <rect x="260" y="240" width="160" height="68" rx="8" fill="#FCEBEB" stroke="#A32D2D" stroke-width="0.5"/>
+        <text x="340" y="262" text-anchor="middle" style="font-size:13px;font-weight:500;fill:#791F1F;font-family:-apple-system,sans-serif;">False investigative</text>
+        <text x="340" y="278" text-anchor="middle" style="font-size:13px;font-weight:500;fill:#791F1F;font-family:-apple-system,sans-serif;">leads</text>
+        <text x="340" y="296" text-anchor="middle" style="font-size:11px;fill:#A32D2D;font-family:-apple-system,sans-serif;">wrongful arrests</text>
+      </g>
+
+      <!-- FLOW 5 → 6 -->
+      <path d="M260 274 C218 274 218 274 180 274" fill="none" stroke="#A32D2D" stroke-width="2" marker-end="url(#arr)" opacity="0.45"/>
+      <text x="220" y="266" text-anchor="middle" style="font-size:10px;fill:#888780;font-family:-apple-system,sans-serif;">justify</text>
+      <text x="220" y="288" text-anchor="middle" style="font-size:10px;fill:#888780;font-family:-apple-system,sans-serif;">more stops</text>
+
+      <!-- NODE 6: More surveillance -->
+      <g class="node-btn" onclick="showCite(5)" aria-label="More stops, searches, and arrests node">
+        <rect x="20" y="240" width="160" height="68" rx="8" fill="#FCEBEB" stroke="#A32D2D" stroke-width="0.5"/>
+        <text x="100" y="258" text-anchor="middle" style="font-size:13px;font-weight:500;fill:#791F1F;font-family:-apple-system,sans-serif;">More stops,</text>
+        <text x="100" y="274" text-anchor="middle" style="font-size:13px;font-weight:500;fill:#791F1F;font-family:-apple-system,sans-serif;">searches, arrests</text>
+        <text x="100" y="292" text-anchor="middle" style="font-size:10px;fill:#A32D2D;font-family:-apple-system,sans-serif;">cameras in Black neighborhoods</text>
+      </g>
+
+      <!-- FEEDBACK LOOP: 6 → 1 (left side, closing the loop) -->
+      <path d="M100 240 C100 170 100 140 100 110" fill="none" stroke="#A32D2D" stroke-width="2" stroke-dasharray="5 3" marker-end="url(#arr)" opacity="0.4"/>
+      <text x="56" y="180" text-anchor="middle" style="font-size:10px;fill:#888780;font-family:-apple-system,sans-serif;">more</text>
+      <text x="56" y="194" text-anchor="middle" style="font-size:10px;fill:#888780;font-family:-apple-system,sans-serif;">mugshots</text>
+
+      <!-- CENTER: loop label -->
+      <text x="340" y="174" text-anchor="middle" style="font-size:14px;font-weight:500;fill:#B4B2A9;font-family:-apple-system,sans-serif;">CLOSED</text>
+      <text x="340" y="192" text-anchor="middle" style="font-size:14px;font-weight:500;fill:#B4B2A9;font-family:-apple-system,sans-serif;">FEEDBACK</text>
+      <text x="340" y="210" text-anchor="middle" style="font-size:14px;font-weight:500;fill:#B4B2A9;font-family:-apple-system,sans-serif;">LOOP</text>
+
+      <!-- External inputs (blue) entering from bottom -->
+      <path d="M340 378 L340 425" fill="none" stroke="#378ADD" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#arr)" opacity="0.5"/>
+
+      <g class="node-btn" onclick="showCite(6)" aria-label="DMV and civil databases node">
+        <rect x="230" y="370" width="220" height="52" rx="8" fill="#E6F1FB" stroke="#185FA5" stroke-width="0.5"/>
+        <text x="340" y="392" text-anchor="middle" style="font-size:12px;font-weight:500;fill:#0C447C;font-family:-apple-system,sans-serif;">DMV + civil databases</text>
+        <text x="340" y="410" text-anchor="middle" style="font-size:11px;fill:#185FA5;font-family:-apple-system,sans-serif;">641M+ photos · never arrested</text>
+      </g>
+
+      <g class="node-btn" onclick="showCite(7)" aria-label="Cannabis arrest disparity node">
+        <rect x="230" y="454" width="220" height="52" rx="8" fill="#E6F1FB" stroke="#185FA5" stroke-width="0.5"/>
+        <text x="340" y="476" text-anchor="middle" style="font-size:12px;font-weight:500;fill:#0C447C;font-family:-apple-system,sans-serif;">Cannabis arrest disparity</text>
+        <text x="340" y="494" text-anchor="middle" style="font-size:11px;fill:#185FA5;font-family:-apple-system,sans-serif;">4× more likely · equal usage rates</text>
+      </g>
+
+      <text x="100" y="398" text-anchor="middle" style="font-size:10px;fill:#888780;font-family:-apple-system,sans-serif;">supporting</text>
+      <text x="100" y="412" text-anchor="middle" style="font-size:10px;fill:#888780;font-family:-apple-system,sans-serif;">evidence</text>
+      <path d="M148 405 L228 398" fill="none" stroke="#888780" stroke-width="0.5" stroke-dasharray="3 2"/>
+      <path d="M148 412 L228 478" fill="none" stroke="#888780" stroke-width="0.5" stroke-dasharray="3 2"/>
+
+      <!-- Legend -->
+      <rect x="464" y="380" width="12" height="12" rx="2" fill="#FCEBEB" stroke="#A32D2D" stroke-width="0.5"/>
+      <text x="482" y="391" style="font-size:11px;fill:#888780;font-family:-apple-system,sans-serif;">Harm node</text>
+      <rect x="464" y="404" width="12" height="12" rx="2" fill="#FAEEDA" stroke="#854F0B" stroke-width="0.5"/>
+      <text x="482" y="415" style="font-size:11px;fill:#888780;font-family:-apple-system,sans-serif;">Data node</text>
+      <rect x="464" y="428" width="12" height="12" rx="2" fill="#E6F1FB" stroke="#185FA5" stroke-width="0.5"/>
+      <text x="482" y="439" style="font-size:11px;fill:#888780;font-family:-apple-system,sans-serif;">External input</text>
+      <line x1="464" y1="462" x2="476" y2="462" stroke="#A32D2D" stroke-width="1.5" stroke-dasharray="4 2"/>
+      <text x="482" y="466" style="font-size:11px;fill:#888780;font-family:-apple-system,sans-serif;">Loop closes</text>
+
+    </svg>
+  </div>
+
+  <div class="cite-box" id="citeBox">
+    Click any node to see the supporting statistic and source citation.
+  </div>
+
+  <footer>
+    <p>
+      <strong>Sources:</strong>
+      Hinton, E., &amp; Cook, D. (2021). The mass criminalization of Black Americans: A historical overview.
+      <em>Annual Review of Criminology, 4</em>, 261–286.
+      Garvie, C., Bedoya, A., &amp; Frankle, J. (2016). <em>The perpetual line-up: Unregulated police face recognition in America</em>.
+      Georgetown Law Center on Privacy &amp; Technology.
+      <a href="https://www.perpetuallineup.org" target="_blank" rel="noopener">perpetuallineup.org</a>.
+      Buolamwini, J., &amp; Gebru, T. (2018). Gender shades: Intersectional accuracy disparities in commercial gender classification.
+      <em>Proceedings of Machine Learning Research, 81</em>, 1–15.
+      National Institute of Standards and Technology. (2026). <em>FRTE 1:1 Verification — Demographic Differentials</em>
+      [table updated 2025-12-11].
+      <a href="https://pages.nist.gov/frvt/html/frvt11.html" target="_blank" rel="noopener">pages.nist.gov/frvt/html/frvt11.html</a>.
+      Grother, P. (2022). <em>NISTIR 8429: FRTE Part 8: Summarizing Demographic Differentials</em>.
+      <a href="https://doi.org/10.6028/NIST.IR.8429" target="_blank" rel="noopener">https://doi.org/10.6028/NIST.IR.8429</a>.
+    </p>
+    <p style="margin-top:0.5rem;">
+      <strong>Methodological note:</strong>
+      Causal arrows represent relationships documented independently across multiple peer-reviewed sources.
+      This diagram illustrates a structural argument grounded in documented co-occurrence and mechanism,
+      not an experimentally established direct causal chain. Node statistics: 5× stop disparity (Hinton &amp; Cook, 2021);
+      56% incarceration share (Hinton &amp; Cook, 2021); 79–86% lighter-skinned training datasets (Buolamwini &amp; Gebru, 2018);
+      1,878× FMR disparity (NIST, 2026); 641M+ photo database (Garvie et al., 2016);
+      4× cannabis arrest disparity (Hinton &amp; Cook, 2021).
+    </p>
+  </footer>
+
+</div>
+
+<script>
+  const CITES = [
+    {
+      title: 'Racially biased policing',
+      stat: '5×',
+      body: 'Black people are five times more likely than white people to be stopped by police. Each stop is a potential arrest; each arrest produces a mugshot; each mugshot enters a database used to train or search facial recognition systems.',
+      source: 'Hinton, E., & Cook, D. (2021). The mass criminalization of Black Americans: A historical overview. Annual Review of Criminology, 4, 261–286.'
+    },
+    {
+      title: 'Skewed mugshot databases',
+      stat: '56%',
+      body: 'Black and Latino individuals comprise 56% of the incarcerated population but only 32% of the U.S. population overall. Black faces are overrepresented in the mugshot databases used for facial recognition training and search. Georgetown Law\'s Perpetual Line-Up documented that Black faces are also overrepresented in the operational databases police use to run searches.',
+      source: 'Garvie, C., Bedoya, A., & Frankle, J. (2016). The Perpetual Line-Up. Georgetown Law Center on Privacy & Technology. / Hinton & Cook (2021).'
+    },
+    {
+      title: 'Biased training data',
+      stat: '79–86%',
+      body: 'Benchmark datasets used to train commercial facial recognition systems were 79.6% to 86.2% composed of lighter-skinned subjects. Systems trained on these datasets learn to distinguish lighter-skinned faces more accurately than darker-skinned ones — producing the demographic disparity NIST documents in its FRTE evaluations.',
+      source: 'Buolamwini, J., & Gebru, T. (2018). Gender Shades: Intersectional accuracy disparities in commercial gender classification. Proceedings of Machine Learning Research, 81, 1–15.'
+    },
+    {
+      title: 'Elevated FMR for Black and Brown faces',
+      stat: '1,878×',
+      body: 'NIST FRTE testing documents false match rate disparities of up to 1,878-fold between Eastern European males aged 35–50 and West African females aged 65–99 — across algorithms submitted by independent developers with different architectures and training pipelines. This pattern has persisted across 95%+ of evaluated algorithms from 2017 through 2025.',
+      source: 'National Institute of Standards and Technology. (2026). FRTE 1:1 Verification Demographic Differentials [table updated 2025-12-11]. / Grother, P. (2022). NISTIR 8429.'
+    },
+    {
+      title: 'False investigative leads and wrongful arrests',
+      stat: '≥3 documented',
+      body: 'Robert Williams (2020, Detroit), Michael Oliver (2019, Detroit), and Nijeer Parks (2019, New Jersey) were each wrongfully arrested after facial recognition algorithms produced false matches against surveillance or evidence photos. In each case the system matched the subject to a photo of a different person. All three are Black men.',
+      source: 'Kashmir Hill (2020). Wrongfully Accused by an Algorithm. The New York Times. / American Civil Liberties Union case documentation (2020–2021).'
+    },
+    {
+      title: 'More surveillance in Black neighborhoods',
+      stat: 'documented',
+      body: 'Georgetown Law\'s Perpetual Line-Up documented that police surveillance cameras are disproportionately installed in Black and Brown neighborhoods, increasing the likelihood these communities are scanned and selected by facial recognition algorithms. Higher search volume for a demographic group directly increases the expected number of false positive identifications for that group (NISTIR 8429, Annex B, eq. 36).',
+      source: 'Garvie, C., Bedoya, A., & Frankle, J. (2016). The Perpetual Line-Up. Georgetown Law Center on Privacy & Technology. perpetuallineup.org.'
+    },
+    {
+      title: 'DMV and civil photo databases',
+      stat: '641M+',
+      body: 'The FBI alone has access to over 641 million facial recognition images through partnerships with state Department of Motor Vehicle databases from at least 21 states. Most of these photographs were collected for civil purposes — driver\'s licenses, passports — but are searched when investigating crimes. People who were never arrested, never charged, and never convicted enter the searchable pool.',
+      source: 'Garvie, C., Bedoya, A., & Frankle, J. (2016). The Perpetual Line-Up. Georgetown Law Center on Privacy & Technology.'
+    },
+    {
+      title: 'Cannabis arrest disparity',
+      stat: '4×',
+      body: 'Cannabis use rates are roughly equal across racial groups, but Black people are nearly four times more likely to be arrested for marijuana possession. These arrests produce mugshots that enter training and search databases, reinforcing the algorithmic disparity with data generated by a racially skewed enforcement pattern — not by different underlying behavior.',
+      source: 'Hinton, E., & Cook, D. (2021). The mass criminalization of Black Americans: A historical overview. Annual Review of Criminology, 4, 261–286.'
+    },
+  ];
+
+  function showCite(i) {
+    const c = CITES[i];
+    document.getElementById('citeBox').innerHTML =
+      `<strong>${c.title}</strong>${c.stat ? ' &nbsp;<span class="cite-stat">' + c.stat + '</span>' : ''}<br>
+      ${c.body}<br>
+      <span class="cite-source">${c.source}</span>`;
+  }
+</script>
+</body>
+</html>

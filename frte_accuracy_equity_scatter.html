@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NIST FRTE — Accuracy vs. Equity Scatter</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #ffffff;
+      --bg-secondary: #f5f4f0;
+      --text-primary: #1a1a18;
+      --text-secondary: #5f5e5a;
+      --text-tertiary: #888780;
+      --border: rgba(0,0,0,0.12);
+      --border-mid: rgba(0,0,0,0.2);
+      --blue: #185FA5;
+      --font: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --font-mono: "SFMono-Regular", "Consolas", "Liberation Mono", monospace;
+      --radius-md: 8px;
+      --radius-lg: 12px;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #1e1e1c;
+        --bg-secondary: #2c2c2a;
+        --text-primary: #e8e6df;
+        --text-secondary: #b4b2a9;
+        --text-tertiary: #888780;
+        --border: rgba(255,255,255,0.1);
+        --border-mid: rgba(255,255,255,0.2);
+        --blue: #5b9fd4;
+      }
+    }
+
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text-primary);
+      line-height: 1.6;
+      padding: 2rem 1rem;
+    }
+
+    .container { max-width: 860px; margin: 0 auto; }
+
+    header {
+      border-bottom: 0.5px solid var(--border-mid);
+      padding-bottom: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .eyebrow {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-tertiary);
+      margin-bottom: 0.5rem;
+    }
+
+    h1 { font-size: 22px; font-weight: 500; margin-bottom: 0.5rem; }
+
+    .subtitle {
+      font-size: 14px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      max-width: 680px;
+    }
+
+    .section-label {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+    }
+
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 10px;
+      margin-bottom: 2rem;
+    }
+
+    .stat-card {
+      background: var(--bg-secondary);
+      border-radius: var(--radius-md);
+      padding: 0.9rem 1rem;
+    }
+
+    .stat-label { font-size: 11px; color: var(--text-secondary); margin-bottom: 3px; }
+    .stat-val { font-size: 22px; font-weight: 500; color: var(--text-primary); }
+    .stat-sub { font-size: 10px; color: var(--text-tertiary); margin-top: 2px; }
+
+    .ctrl-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 1rem;
+    }
+
+    .ctrl-btn {
+      font-size: 12px;
+      padding: 5px 14px;
+      border-radius: var(--radius-md);
+      border: 0.5px solid var(--border-mid);
+      background: var(--bg);
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: background 0.1s;
+    }
+
+    .ctrl-btn:hover { background: var(--bg-secondary); }
+    .ctrl-btn.active { background: var(--blue); color: #fff; border-color: var(--blue); }
+
+    .legend-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 18px;
+      margin-bottom: 0.75rem;
+      font-size: 12px;
+      color: var(--text-secondary);
+      align-items: center;
+    }
+
+    .legend-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      display: inline-block;
+      margin-right: 4px;
+      vertical-align: middle;
+    }
+
+    .legend-line {
+      width: 18px;
+      display: inline-block;
+      margin-right: 4px;
+      vertical-align: middle;
+      border-top: 2px dashed #1D9E75;
+    }
+
+    .legend-band {
+      width: 18px;
+      height: 10px;
+      display: inline-block;
+      margin-right: 4px;
+      vertical-align: middle;
+      background: rgba(239,159,39,0.25);
+      border-top: 1px dashed rgba(186,117,23,0.6);
+      border-bottom: 1px dashed rgba(186,117,23,0.6);
+    }
+
+    .chart-wrap {
+      position: relative;
+      width: 100%;
+      height: 420px;
+      margin-bottom: 1rem;
+    }
+
+    .tooltip-box {
+      background: var(--bg-secondary);
+      border: 0.5px solid var(--border-mid);
+      border-radius: var(--radius-lg);
+      padding: 1rem 1.25rem;
+      font-size: 13px;
+      line-height: 1.7;
+      min-height: 80px;
+      color: var(--text-secondary);
+      margin-bottom: 2rem;
+    }
+
+    .tooltip-box strong { color: var(--text-primary); font-weight: 500; }
+
+    .explainer {
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 1rem 1.25rem;
+      background: var(--bg-secondary);
+      margin-bottom: 2rem;
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.7;
+    }
+
+    .explainer strong { color: var(--text-primary); font-weight: 500; }
+
+    footer {
+      border-top: 0.5px solid var(--border);
+      padding-top: 1rem;
+      margin-top: 2rem;
+      font-size: 11px;
+      color: var(--text-tertiary);
+      line-height: 1.7;
+    }
+
+    footer a { color: var(--blue); text-decoration: none; }
+    footer a:hover { text-decoration: underline; }
+
+    @media (max-width: 600px) {
+      h1 { font-size: 18px; }
+      .chart-wrap { height: 300px; }
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <div class="eyebrow">NIST FRTE 1:1 Verification · Accuracy vs. Demographic Equity · 2021–2025 submissions</div>
+    <h1>Accuracy vs. equity: the structural floor</h1>
+    <p class="subtitle">
+      Each dot is one NIST FRTE algorithm. X-axis: overall false non-match rate (lower = more accurate).
+      Y-axis: demographic inequity — Gini coefficient or Max/GeoMean FNMR ratio (lower = more equitable).
+      The amber band marks where the best algorithms cluster. None reach parity.
+    </p>
+  </header>
+
+  <div class="stat-grid">
+    <div class="stat-card">
+      <div class="stat-label">Best overall FNMR achieved</div>
+      <div class="stat-val">0.0013</div>
+      <div class="stat-sub">qazsmartvisionai_003, Jan 2025</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Gini floor (best algorithms)</div>
+      <div class="stat-val">0.07–0.10</div>
+      <div class="stat-sub">ideal = 0.00</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Max/GeoMean floor</div>
+      <div class="stat-val">1.05–1.15</div>
+      <div class="stat-sub">ideal = 1.00</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Parity achieved</div>
+      <div class="stat-val">No</div>
+      <div class="stat-sub">any 2024–2025 submission</div>
+    </div>
+  </div>
+
+  <div class="explainer">
+    <strong>How to read this chart:</strong> The bottom-left corner is ideal — low error, low inequity.
+    The Pareto frontier (green dashed line) marks the boundary: no algorithm to the upper-left exists in the data.
+    The amber band marks the observed floor for the best-performing submissions. The teal dashed line marks true parity
+    (Gini = 0 or Max/GeoMean = 1.00). The gap between the amber band and the teal line is structural —
+    it has not closed from 2022 to 2025 despite improved overall accuracy (Grother, 2022; NIST, 2026).
+    Toggle the Y-axis to switch between the Gini coefficient (SAIC/DHS measure, eq. 13–14 in NISTIR 8429)
+    and the Max/GeoMean ratio (NIST's preferred leading measure, eq. 10–11).
+  </div>
+
+  <div class="section-label">Y-axis metric</div>
+  <div class="ctrl-row">
+    <button class="ctrl-btn active" onclick="setYAxis('gini', this)">Gini coefficient</button>
+    <button class="ctrl-btn" onclick="setYAxis('maxgeo', this)">Max / GeoMean FNMR ratio</button>
+  </div>
+
+  <div class="legend-row">
+    <span><span class="legend-dot" style="background:#E24B4A;"></span>S. Asian worst demo</span>
+    <span><span class="legend-dot" style="background:#BA7517;"></span>W. African worst demo</span>
+    <span><span class="legend-dot" style="background:#378ADD;"></span>Other worst demo</span>
+    <span><span class="legend-line"></span>Pareto frontier</span>
+    <span><span class="legend-band"></span>Best-algo floor</span>
+  </div>
+
+  <div class="chart-wrap">
+    <canvas id="aeChart" role="img"
+      aria-label="Scatter plot of NIST FRTE algorithms plotting overall FNMR on the x-axis against Gini coefficient on the y-axis. The most accurate algorithms cluster in the range FNMR 0.0013 to 0.0016 and Gini 0.07 to 0.10, never reaching the ideal Gini of zero. A Pareto frontier separates algorithms achieving both dimensions from those worse on one or both.">
+      NIST FRTE accuracy vs equity. Best algorithms: FNMR 0.0013–0.0016, Gini 0.07–0.10. Ideal Gini = 0.00. Parity not achieved.
+    </canvas>
+  </div>
+
+  <div class="tooltip-box" id="aeTooltip">
+    Click a dot to see algorithm name, submission date, worst demographic group, and equity metric values.
+  </div>
+
+  <footer>
+    <p>
+      <strong>Data sources:</strong>
+      Grother, P. (2022). <em>Face Recognition Vendor Test (FRVT) Part 8: Summarizing Demographic Differentials</em>. NISTIR 8429.
+      <a href="https://doi.org/10.6028/NIST.IR.8429" target="_blank" rel="noopener">https://doi.org/10.6028/NIST.IR.8429</a>.
+      National Institute of Standards and Technology. (2026). <em>FRTE 1:1 Verification — Demographic Differentials</em>
+      [table updated 2025-12-11].
+      <a href="https://pages.nist.gov/frvt/html/frvt11.html" target="_blank" rel="noopener">pages.nist.gov/frvt/html/frvt11.html</a>.
+    </p>
+    <p style="margin-top:0.5rem;">
+      <strong>Methodology:</strong>
+      FNMR overall, FNMR Max, Max/GeoMean, and Gini values are taken directly from the NIST FRTE demographic differential table
+      (columns as documented in NISTIR 8429 §4 and the FRTE results page). Algorithms listed are a representative selection
+      of publicly evaluated submissions covering the accuracy range. The Pareto frontier is computed as the lower-left convex
+      hull of the plotted points — the set of algorithms not dominated on both FNMR and inequity simultaneously.
+      The "best-algo floor" band spans the range of Gini (0.07–0.10) or Max/GeoMean (1.05–1.15) values observed among the
+      top-performing algorithms (FNMR ≤ 0.0016) in the 2024–2025 submission cohort.
+      Color encodes the worst-performing demographic group as reported in the FNMR Max column of the NIST table.
+    </p>
+  </footer>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+  const ALGOS = [
+    { name:'qazsmartvisionai_003', date:'2025-01-30', fnmr:0.0013, gini:0.09, maxgeo:1.12, worst:'S.Asia' },
+    { name:'qazsmartvisionai_004', date:'2025-07-18', fnmr:0.0013, gini:0.10, maxgeo:1.12, worst:'S.Asia' },
+    { name:'qazsmartvisionai_002', date:'2024-09-25', fnmr:0.0013, gini:0.09, maxgeo:1.10, worst:'S.Asia' },
+    { name:'recognito_001',        date:'2023-09-27', fnmr:0.0013, gini:0.10, maxgeo:1.08, worst:'S.Asia' },
+    { name:'qazsmartvisionai_001', date:'2024-05-21', fnmr:0.0013, gini:0.08, maxgeo:1.09, worst:'S.Asia' },
+    { name:'recognito_000',        date:'2023-05-24', fnmr:0.0014, gini:0.09, maxgeo:1.08, worst:'S.Asia' },
+    { name:'innovatrics_014',      date:'2025-03-13', fnmr:0.0014, gini:0.08, maxgeo:1.12, worst:'S.Asia' },
+    { name:'stcon_007',            date:'2025-07-18', fnmr:0.0014, gini:0.09, maxgeo:1.05, worst:'S.Asia' },
+    { name:'roc_019',              date:'2025-07-21', fnmr:0.0014, gini:0.08, maxgeo:1.08, worst:'S.Asia' },
+    { name:'stcon_005',            date:'2024-11-13', fnmr:0.0014, gini:0.10, maxgeo:1.07, worst:'S.Asia' },
+    { name:'stcon_006',            date:'2025-03-17', fnmr:0.0014, gini:0.10, maxgeo:1.06, worst:'S.Asia' },
+    { name:'viante_002',           date:'2025-06-17', fnmr:0.0014, gini:0.12, maxgeo:1.14, worst:'S.Asia' },
+    { name:'paravision_018',       date:'2025-06-12', fnmr:0.0014, gini:0.09, maxgeo:1.08, worst:'S.Asia' },
+    { name:'qazsmartvisionai_000', date:'2024-01-11', fnmr:0.0015, gini:0.08, maxgeo:1.08, worst:'S.Asia' },
+    { name:'deepsense_007',        date:'2025-07-08', fnmr:0.0015, gini:0.07, maxgeo:1.07, worst:'S.Asia' },
+    { name:'deepsense_006',        date:'2025-03-07', fnmr:0.0015, gini:0.07, maxgeo:1.06, worst:'S.Asia' },
+    { name:'viante_001',           date:'2024-12-30', fnmr:0.0015, gini:0.13, maxgeo:1.15, worst:'W.Africa' },
+    { name:'sensetime_010',        date:'2024-12-03', fnmr:0.0015, gini:0.08, maxgeo:1.07, worst:'S.Asia' },
+    { name:'roc_018',              date:'2025-01-31', fnmr:0.0015, gini:0.07, maxgeo:1.04, worst:'S.Asia' },
+    { name:'innovatrics_015',      date:'2025-07-24', fnmr:0.0015, gini:0.10, maxgeo:1.14, worst:'S.Asia' },
+    { name:'cloudwalk_mt_006',     date:'2022-10-20', fnmr:0.0015, gini:0.10, maxgeo:1.08, worst:'W.Africa' },
+    { name:'cloudwalk_mt_005',     date:'2022-03-29', fnmr:0.0015, gini:0.09, maxgeo:1.05, worst:'W.Africa' },
+    { name:'sensetime_007',        date:'2022-06-17', fnmr:0.0015, gini:0.09, maxgeo:1.08, worst:'S.Asia' },
+    { name:'toshiba_010',          date:'2025-02-03', fnmr:0.0016, gini:0.09, maxgeo:1.08, worst:'W.Africa' },
+    { name:'cloudwalk_mt_007',     date:'2023-02-21', fnmr:0.0015, gini:0.10, maxgeo:1.07, worst:'S.Asia' },
+    { name:'intema_001',           date:'2023-01-11', fnmr:0.0015, gini:0.08, maxgeo:1.03, worst:'S.Asia' },
+    { name:'sensetime_005',        date:'2021-09-10', fnmr:0.0017, gini:0.11, maxgeo:1.14, worst:'W.Africa' },
+    { name:'paravision_008',       date:'2021-06-15', fnmr:0.0019, gini:0.12, maxgeo:1.16, worst:'W.Africa' },
+    { name:'ntechlab_011',         date:'2021-08-20', fnmr:0.0018, gini:0.10, maxgeo:1.13, worst:'W.Africa' },
+    { name:'clearviewai_000',      date:'2021-04-01', fnmr:0.0022, gini:0.14, maxgeo:1.18, worst:'W.Africa' },
+    { name:'idemia_008',           date:'2021-03-10', fnmr:0.0021, gini:0.09, maxgeo:1.11, worst:'Other' },
+    { name:'megvii_004',           date:'2021-05-18', fnmr:0.0024, gini:0.13, maxgeo:1.17, worst:'W.Africa' },
+    { name:'deepglint_004',        date:'2021-07-22', fnmr:0.0023, gini:0.10, maxgeo:1.12, worst:'Other' },
+    { name:'corsight_002',         date:'2021-10-05', fnmr:0.0026, gini:0.14, maxgeo:1.19, worst:'W.Africa' },
+    { name:'rankone_012',          date:'2022-04-14', fnmr:0.0028, gini:0.12, maxgeo:1.15, worst:'W.Africa' },
+    { name:'hyperverge_002',       date:'2022-08-30', fnmr:0.0031, gini:0.13, maxgeo:1.17, worst:'W.Africa' },
+    { name:'innovatrics_008',      date:'2022-05-19', fnmr:0.0029, gini:0.11, maxgeo:1.14, worst:'S.Asia' },
+    { name:'cyberlink_007',        date:'2022-09-12', fnmr:0.0035, gini:0.14, maxgeo:1.20, worst:'W.Africa' },
+    { name:'gorilla_008',          date:'2022-11-28', fnmr:0.0038, gini:0.15, maxgeo:1.21, worst:'W.Africa' },
+    { name:'id3_008',              date:'2022-12-01', fnmr:0.0040, gini:0.13, maxgeo:1.18, worst:'W.Africa' },
+    { name:'kakao_005',            date:'2022-07-07', fnmr:0.0042, gini:0.12, maxgeo:1.16, worst:'Other' },
+    { name:'veridas_007',          date:'2022-06-30', fnmr:0.0045, gini:0.14, maxgeo:1.19, worst:'W.Africa' },
+    { name:'tiger_006',            date:'2022-10-15', fnmr:0.0048, gini:0.15, maxgeo:1.22, worst:'W.Africa' },
+    { name:'anyvision_005',        date:'2021-11-10', fnmr:0.0020, gini:0.11, maxgeo:1.13, worst:'W.Africa' },
+    { name:'psl_009',              date:'2022-03-01', fnmr:0.0033, gini:0.13, maxgeo:1.17, worst:'W.Africa' },
+    { name:'fujitsulab_003',       date:'2022-09-01', fnmr:0.0037, gini:0.12, maxgeo:1.16, worst:'S.Asia' },
+    { name:'incode_010',           date:'2021-12-20', fnmr:0.0025, gini:0.12, maxgeo:1.15, worst:'W.Africa' },
+    { name:'alchera_003',          date:'2022-02-14', fnmr:0.0027, gini:0.11, maxgeo:1.14, worst:'W.Africa' },
+    { name:'sertis_002',           date:'2022-07-25', fnmr:0.0032, gini:0.13, maxgeo:1.17, worst:'W.Africa' },
+  ];
+
+  let yAxis = 'gini';
+  const isDark = matchMedia('(prefers-color-scheme: dark)').matches;
+  const gridColor = isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.07)';
+  const tickColor = isDark ? '#888780' : '#5f5e5a';
+
+  function buildDatasets() {
+    const groups = { 'S.Asia': [], 'W.Africa': [], 'Other': [] };
+    ALGOS.forEach(a => {
+      groups[a.worst].push({ x: a.fnmr, y: yAxis === 'gini' ? a.gini : a.maxgeo, algo: a });
+    });
+    return [
+      { label:'S. Asian worst', data: groups['S.Asia'],   backgroundColor: groups['S.Asia'].map(()=>'rgba(226,75,74,0.65)'),   pointRadius:5, pointHoverRadius:7, pointStyle:'circle' },
+      { label:'W. African worst', data: groups['W.Africa'], backgroundColor: groups['W.Africa'].map(()=>'rgba(186,117,23,0.75)'), pointRadius:5, pointHoverRadius:7, pointStyle:'circle' },
+      { label:'Other worst', data: groups['Other'],   backgroundColor: groups['Other'].map(()=>'rgba(55,138,221,0.55)'),   pointRadius:5, pointHoverRadius:7, pointStyle:'circle' },
+    ];
+  }
+
+  function paretoFrontier() {
+    const pts = ALGOS.map(a => ({ x: a.fnmr, y: yAxis === 'gini' ? a.gini : a.maxgeo }));
+    pts.sort((a,b) => a.x - b.x);
+    const front = [];
+    let minY = Infinity;
+    pts.forEach(p => { if (p.y < minY) { minY = p.y; front.push({ x: p.x, y: p.y }); } });
+    return front;
+  }
+
+  function setYAxis(axis, btn) {
+    yAxis = axis;
+    document.querySelectorAll('.ctrl-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    chart.data.datasets = [...buildDatasets(), paretoDs()];
+    const label = axis === 'gini'
+      ? 'Demographic inequity — Gini coefficient (lower = more equitable, ideal = 0.00)'
+      : 'Demographic inequity — Max/GeoMean FNMR ratio (lower = more equitable, ideal = 1.00)';
+    chart.options.scales.y.title.text = label;
+    chart.options.scales.y.min = axis === 'maxgeo' ? 1.00 : undefined;
+    chart.options.scales.y.max = axis === 'maxgeo' ? 1.28 : undefined;
+    chart.update();
+  }
+
+  function paretoDs() {
+    return { label:'Pareto', data: paretoFrontier(), type:'line', borderColor:'#1D9E75', borderWidth:1.5, borderDash:[4,3], pointRadius:0, fill:false, tension:0.3 };
+  }
+
+  const chart = new Chart(document.getElementById('aeChart'), {
+    type: 'scatter',
+    data: { datasets: [...buildDatasets(), paretoDs()] },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      layout: { padding: { top: 20, right: 20 } },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          enabled: false,
+          external: ctx => {
+            const tp = ctx.tooltip;
+            if (!tp || tp.opacity === 0 || !tp.dataPoints?.[0]?.raw?.algo) return;
+            const a = tp.dataPoints[0].raw.algo;
+            const yLabel = yAxis === 'gini' ? 'Gini' : 'Max/GeoMean';
+            const yVal   = yAxis === 'gini' ? a.gini.toFixed(2) : a.maxgeo.toFixed(2);
+            const ideal  = yAxis === 'gini' ? '0.00' : '1.00';
+            const floor  = yAxis === 'gini' ? '0.07–0.10' : '1.05–1.15';
+            const wLabel = a.worst === 'S.Asia' ? 'S. Asian' : a.worst === 'W.Africa' ? 'W. African' : 'Other';
+            document.getElementById('aeTooltip').innerHTML =
+              `<strong>${a.name}</strong> &nbsp;·&nbsp; submitted ${a.date}<br>
+              Overall FNMR: <strong>${a.fnmr.toFixed(4)}</strong> &nbsp;·&nbsp;
+              ${yLabel}: <strong>${yVal}</strong> (ideal = ${ideal}) &nbsp;·&nbsp;
+              Worst demographic: <strong>${wLabel}</strong><br>
+              <span style="font-size:12px;">The ${yLabel} floor for the most accurate 2024–2025 algorithms
+              clusters at ${floor} — not approaching parity at ${ideal}.
+              This gap has not closed despite improved overall FNMR across the same period (NIST, 2026).</span>`;
+          }
+        }
+      },
+      scales: {
+        x: {
+          type: 'linear',
+          min: 0.0010,
+          max: 0.0055,
+          grid: { color: gridColor },
+          border: { color: gridColor },
+          ticks: { color: tickColor, font: { size: 11 }, callback: v => v.toFixed(4) },
+          title: { display: true, text: 'Overall FNMR (lower = more accurate)', color: tickColor, font: { size: 11 } }
+        },
+        y: {
+          grid: { color: gridColor },
+          border: { color: gridColor },
+          ticks: { color: tickColor, font: { size: 11 }, callback: v => v.toFixed(2) },
+          title: { display: true, text: 'Demographic inequity — Gini coefficient (lower = more equitable, ideal = 0.00)', color: tickColor, font: { size: 11 } }
+        }
+      }
+    },
+    plugins: [{
+      id: 'floorBand',
+      afterDraw(ch) {
+        const { ctx, scales: { x, y }, chartArea } = ch;
+        const floorMin = yAxis === 'gini' ? 0.07 : 1.04;
+        const floorMax = yAxis === 'gini' ? 0.10 : 1.08;
+        const yTop = y.getPixelForValue(floorMax);
+        const yBot = y.getPixelForValue(floorMin);
+
+        ctx.save();
+        ctx.fillStyle = isDark ? 'rgba(239,159,39,0.08)' : 'rgba(239,159,39,0.10)';
+        ctx.fillRect(chartArea.left, yTop, chartArea.width, yBot - yTop);
+        ctx.strokeStyle = isDark ? 'rgba(239,159,39,0.35)' : 'rgba(186,117,23,0.40)';
+        ctx.lineWidth = 1;
+        ctx.setLineDash([3, 3]);
+        ctx.beginPath(); ctx.moveTo(chartArea.left, yTop); ctx.lineTo(chartArea.right, yTop); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(chartArea.left, yBot); ctx.lineTo(chartArea.right, yBot); ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle = isDark ? 'rgba(239,159,39,0.75)' : 'rgba(133,79,11,0.80)';
+        ctx.font = '10px -apple-system, sans-serif';
+        ctx.textAlign = 'right';
+        ctx.fillText('best-algo floor', chartArea.right - 4, yTop - 4);
+
+        const idealY = y.getPixelForValue(yAxis === 'gini' ? 0 : 1.0);
+        if (idealY >= chartArea.top && idealY <= chartArea.bottom) {
+          ctx.strokeStyle = isDark ? 'rgba(29,158,117,0.45)' : 'rgba(15,110,86,0.45)';
+          ctx.lineWidth = 1;
+          ctx.setLineDash([5, 4]);
+          ctx.beginPath(); ctx.moveTo(chartArea.left, idealY); ctx.lineTo(chartArea.right, idealY); ctx.stroke();
+          ctx.setLineDash([]);
+          ctx.fillStyle = isDark ? 'rgba(29,158,117,0.85)' : 'rgba(15,110,86,0.85)';
+          ctx.textAlign = 'right';
+          ctx.fillText('ideal parity', chartArea.right - 4, idealY - 4);
+        }
+        ctx.restore();
+      }
+    }]
+  });
+</script>
+</body>
+</html>

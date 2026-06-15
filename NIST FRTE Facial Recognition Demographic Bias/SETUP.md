@@ -61,11 +61,9 @@ cd nist-frte-facial-recognition-bias
 
 ## Step 4 — Copy files into the folder
 
-Copy these five files into `nist-frte-facial-recognition-bias\`:
+Copy these three files into `nist-frte-facial-recognition-bias\`:
 
 - `frte_false_positive_calculator.html`
-- `frte_fmr_heatmap.html`
-- `frte_bias_persistence_timeline.html`
 - `README.md`
 - `SETUP.md`
 
@@ -73,8 +71,6 @@ You can do this in File Explorer or with Command Prompt if the files are already
 
 ```
 copy %USERPROFILE%\Desktop\frte_false_positive_calculator.html .
-copy %USERPROFILE%\Desktop\frte_fmr_heatmap.html .
-copy %USERPROFILE%\Desktop\frte_bias_persistence_timeline.html .
 copy %USERPROFILE%\Desktop\README.md .
 copy %USERPROFILE%\Desktop\SETUP.md .
 ```

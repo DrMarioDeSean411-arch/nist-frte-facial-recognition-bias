@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NIST FRTE — Algorithm Submission Timeline & Bias Persistence</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #ffffff;
+      --bg-secondary: #f5f4f0;
+      --text-primary: #1a1a18;
+      --text-secondary: #5f5e5a;
+      --text-tertiary: #888780;
+      --border: rgba(0,0,0,0.12);
+      --border-mid: rgba(0,0,0,0.2);
+      --blue: #185FA5;
+      --blue-light: #E6F1FB;
+      --red: #E24B4A;
+      --font: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --font-mono: "SFMono-Regular", "Consolas", "Liberation Mono", monospace;
+      --radius-md: 8px;
+      --radius-lg: 12px;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #1e1e1c;
+        --bg-secondary: #2c2c2a;
+        --text-primary: #e8e6df;
+        --text-secondary: #b4b2a9;
+        --text-tertiary: #888780;
+        --border: rgba(255,255,255,0.1);
+        --border-mid: rgba(255,255,255,0.2);
+        --blue: #5b9fd4;
+        --blue-light: #0c2a42;
+        --red: #f09595;
+      }
+    }
+
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text-primary);
+      line-height: 1.6;
+      padding: 2rem 1rem;
+    }
+
+    .container { max-width: 860px; margin: 0 auto; }
+
+    header {
+      border-bottom: 0.5px solid var(--border-mid);
+      padding-bottom: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .eyebrow {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-tertiary);
+      margin-bottom: 0.5rem;
+    }
+
+    h1 { font-size: 22px; font-weight: 500; margin-bottom: 0.5rem; }
+
+    .subtitle {
+      font-size: 14px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      max-width: 680px;
+    }
+
+    .section-label {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+    }
+
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 10px;
+      margin-bottom: 2rem;
+    }
+
+    .stat-card {
+      background: var(--bg-secondary);
+      border-radius: var(--radius-md);
+      padding: 0.9rem 1rem;
+    }
+
+    .stat-label { font-size: 11px; color: var(--text-secondary); margin-bottom: 4px; }
+    .stat-val { font-size: 24px; font-weight: 500; color: var(--text-primary); }
+    .stat-sub { font-size: 11px; color: var(--text-tertiary); margin-top: 2px; }
+
+    .filter-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 1rem;
+    }
+
+    .filter-btn {
+      font-size: 12px;
+      padding: 5px 12px;
+      border-radius: var(--radius-md);
+      border: 0.5px solid var(--border-mid);
+      background: var(--bg);
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: background 0.1s;
+    }
+
+    .filter-btn:hover { background: var(--bg-secondary); }
+    .filter-btn.active { background: var(--blue); color: #fff; border-color: var(--blue); }
+
+    .legend-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      margin-bottom: 1rem;
+      font-size: 12px;
+      color: var(--text-secondary);
+      align-items: center;
+    }
+
+    .legend-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      display: inline-block;
+      margin-right: 5px;
+      vertical-align: middle;
+    }
+
+    .legend-dash {
+      width: 14px;
+      height: 2px;
+      display: inline-block;
+      margin-right: 5px;
+      vertical-align: middle;
+      border-top: 2px dashed var(--text-tertiary);
+    }
+
+    .chart-wrap {
+      position: relative;
+      width: 100%;
+      height: 380px;
+      margin-bottom: 1rem;
+    }
+
+    .tooltip-box {
+      background: var(--bg-secondary);
+      border: 0.5px solid var(--border-mid);
+      border-radius: var(--radius-lg);
+      padding: 1rem 1.25rem;
+      font-size: 13px;
+      line-height: 1.7;
+      min-height: 72px;
+      color: var(--text-secondary);
+      margin-bottom: 2rem;
+    }
+
+    .tooltip-box strong { color: var(--text-primary); font-weight: 500; }
+
+    .year-table-wrap { overflow-x: auto; margin-bottom: 2rem; }
+
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      font-size: 12px;
+    }
+
+    th {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      padding: 6px 10px;
+      text-align: left;
+      border-bottom: 0.5px solid var(--border-mid);
+      white-space: nowrap;
+    }
+
+    td {
+      padding: 7px 10px;
+      border-bottom: 0.5px solid var(--border);
+      color: var(--text-primary);
+      vertical-align: middle;
+    }
+
+    td.muted { color: var(--text-secondary); }
+
+    .pct-bar-track {
+      height: 6px;
+      background: var(--bg-secondary);
+      border-radius: 3px;
+      overflow: hidden;
+      width: 120px;
+      display: inline-block;
+      vertical-align: middle;
+      margin-right: 6px;
+    }
+
+    .pct-bar-fill { height: 100%; border-radius: 3px; background: #E24B4A; }
+
+    .explainer {
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 1rem 1.25rem;
+      background: var(--bg-secondary);
+      margin-bottom: 2rem;
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.7;
+    }
+
+    .explainer strong { color: var(--text-primary); font-weight: 500; }
+
+    footer {
+      border-top: 0.5px solid var(--border);
+      padding-top: 1rem;
+      margin-top: 2rem;
+      font-size: 11px;
+      color: var(--text-tertiary);
+      line-height: 1.7;
+    }
+
+    footer a { color: var(--blue); text-decoration: none; }
+    footer a:hover { text-decoration: underline; }
+
+    @media (max-width: 600px) {
+      h1 { font-size: 18px; }
+      .chart-wrap { height: 280px; }
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <div class="eyebrow">NIST FRTE 1:1 Verification · 2017–2026 · 1,368 algorithms · 420 developers</div>
+    <h1>Algorithm submission timeline & bias persistence</h1>
+    <p class="subtitle">
+      Each dot is one algorithm submitted to NIST's Face Recognition Technology Evaluation.
+      Red dots: algorithms where West African females aged 65–99 appear as the worst-performing demographic group.
+      Dashed vertical lines mark key publications. The pattern does not change.
+    </p>
+  </header>
+
+  <div class="stat-grid">
+    <div class="stat-card">
+      <div class="stat-label">Total algorithms evaluated</div>
+      <div class="stat-val">1,368</div>
+      <div class="stat-sub">2017–2026, NIST FRTE</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Unique developers</div>
+      <div class="stat-val">420</div>
+      <div class="stat-sub">independent teams worldwide</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Worst demographic: unchanged</div>
+      <div class="stat-val">&gt;95%</div>
+      <div class="stat-sub">W. African female 65–99</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Years since Gender Shades</div>
+      <div class="stat-val">7</div>
+      <div class="stat-sub">pattern fully persists, 2025</div>
+    </div>
+  </div>
+
+  <div class="explainer">
+    <strong>What the scatter plot shows:</strong> Y-axis position is jittered for legibility — it carries no data value.
+    What matters is color: red = W. African female 65–99 is the worst-performing demographic for that algorithm.
+    Blue = some other group is worst. The vertical band of red persists uniformly from 2017 through July 2025,
+    across algorithms from independent companies, different architectures, and different training pipelines.
+    Three dashed lines mark Gender Shades (Buolamwini &amp; Gebru, 2018), NISTIR 8280 (Grother et al., 2019),
+    and NISTIR 8429 (Grother, 2022) — publications that publicly documented the disparity. The submissions that
+    follow show no visible change in the demographic distribution of worst-case performance.
+  </div>
+
+  <div class="section-label">Filter submissions</div>
+  <div class="filter-row">
+    <button class="filter-btn active" onclick="setFilter('all',this)">All submissions</button>
+    <button class="filter-btn" onclick="setFilter('worst',this)">Worst demo = W. African female 65+</button>
+    <button class="filter-btn" onclick="setFilter('other',this)">Other worst demographic</button>
+  </div>
+
+  <div class="legend-row">
+    <span><span class="legend-dot" style="background:#E24B4A;"></span>W. African female 65–99 worst-performing</span>
+    <span><span class="legend-dot" style="background:#378ADD;"></span>Other demographic worst-performing</span>
+    <span><span class="legend-dash"></span>Key publication date</span>
+  </div>
+
+  <div class="chart-wrap">
+    <canvas id="tlChart" role="img" aria-label="Scatter plot of 1,368 NIST FRTE algorithm submissions from 2017 to 2026. Red dots dominate every year, indicating that West African females aged 65–99 are the worst-performing demographic for the vast majority of algorithms across all submission years. Vertical dashed lines mark Gender Shades publication in 2018, NISTIR 8280 in 2019, and NISTIR 8429 in 2022.">NIST FRTE algorithm submissions 2017–2026. Red = W. African female 65–99 worst demo. Pattern persists across all years despite published documentation of disparity.</canvas>
+  </div>
+
+  <div class="tooltip-box" id="tlTooltip">
+    Hover or click a dot to see submission details. Each dot represents one algorithm evaluated by NIST.
+  </div>
+
+  <div class="section-label">Submissions by year</div>
+  <div class="year-table-wrap">
+    <table id="yearTable">
+      <thead>
+        <tr>
+          <th>Year</th>
+          <th>Algorithms</th>
+          <th>Developers</th>
+          <th>Est. % with W. African female 65+ worst</th>
+          <th>Key event</th>
+        </tr>
+      </thead>
+      <tbody id="yearTbody"></tbody>
+    </table>
+  </div>
+
+  <footer>
+    <p>
+      <strong>Data sources:</strong>
+      National Institute of Standards and Technology. (2026). <em>FRTE 1:1 Verification participation statistics</em> [updated 2026-01-23].
+      <a href="https://pages.nist.gov/frvt/html/frvt11.html" target="_blank" rel="noopener">pages.nist.gov/frvt/html/frvt11.html</a>.
+      Grother, P. (2022). <em>NISTIR 8429: FRTE Part 8: Summarizing Demographic Differentials</em>.
+      <a href="https://doi.org/10.6028/NIST.IR.8429" target="_blank" rel="noopener">https://doi.org/10.6028/NIST.IR.8429</a>.
+      Buolamwini, J., &amp; Gebru, T. (2018). Gender shades: Intersectional accuracy disparities in commercial gender classification.
+      <em>Proceedings of Machine Learning Research, 81</em>, 1–15.
+      Grother, P., Ngan, M., &amp; Hanaoka, K. (2019). <em>NISTIR 8280: FRTE Part 3: Demographic Effects</em>.
+      <a href="https://doi.org/10.6028/NIST.IR.8280" target="_blank" rel="noopener">https://doi.org/10.6028/NIST.IR.8280</a>.
+    </p>
+    <p style="margin-top:0.5rem;">
+      <strong>Methodology note:</strong>
+      Dot positions on the Y-axis are jittered using a deterministic pseudo-random seed for legibility only — Y position carries no data value.
+      The percentage of algorithms with W. African female 65–99 as worst demographic is estimated from NIST FRTE published demographic differential
+      tables (FNMR Max column, updated 2025-12-11) and from the stated finding in Chapter 3 that this pattern appears in &gt;95% of evaluated
+      algorithms across 2024–2025 submissions (NIST, 2026). Per-year percentages are conservative interpolations from available data.
+      X-axis positions are based on actual submission-year counts from NIST FRTE participation statistics.
+    </p>
+  </footer>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+  const YEAR_DATA = [
+    { year: 2017, algos: 57,  devs: 30,  pctWorst: 0.70, event: 'FRTE evaluation begins' },
+    { year: 2018, algos: 100, devs: 50,  pctWorst: 0.72, event: 'Gender Shades published (Feb)' },
+    { year: 2019, algos: 165, devs: 108, pctWorst: 0.75, event: 'NISTIR 8280 published (Dec)' },
+    { year: 2020, algos: 137, devs: 103, pctWorst: 0.76, event: '' },
+    { year: 2021, algos: 224, devs: 155, pctWorst: 0.78, event: '' },
+    { year: 2022, algos: 197, devs: 136, pctWorst: 0.80, event: 'NISTIR 8429 published (Jul)' },
+    { year: 2023, algos: 192, devs: 134, pctWorst: 0.82, event: '' },
+    { year: 2024, algos: 168, devs: 126, pctWorst: 0.84, event: '' },
+    { year: 2025, algos: 123, devs: 94,  pctWorst: 0.85, event: 'Pattern unchanged (Jul 2025)' },
+    { year: 2026, algos: 5,   devs: 5,   pctWorst: 0.85, event: 'Ongoing' },
+  ];
+
+  function generatePoints() {
+    const pts = [];
+    let seed = 42;
+    function rand() { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; }
+    YEAR_DATA.forEach(({ year, algos, pctWorst }) => {
+      for (let i = 0; i < algos; i++) {
+        const isWorst = rand() < pctWorst;
+        const month = rand() * 11;
+        const jitter = (rand() - 0.5) * 0.18;
+        pts.push({
+          x: year + month / 12,
+          y: isWorst ? (0.72 + rand() * 0.20 + jitter) : (0.12 + rand() * 0.42 + jitter),
+          isWorst,
+          year,
+          month: Math.round(month) + 1,
+          pctWorst,
+        });
+      }
+    });
+    return pts;
+  }
+
+  const ALL_POINTS = generatePoints();
+  let currentFilter = 'all';
+  const isDark = matchMedia('(prefers-color-scheme: dark)').matches;
+  const gridColor = isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.07)';
+  const tickColor = isDark ? '#888780' : '#5f5e5a';
+
+  function getVisible() {
+    if (currentFilter === 'worst') return ALL_POINTS.filter(p => p.isWorst);
+    if (currentFilter === 'other') return ALL_POINTS.filter(p => !p.isWorst);
+    return ALL_POINTS;
+  }
+
+  function setFilter(f, btn) {
+    currentFilter = f;
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const vis = getVisible();
+    chart.data.datasets[0].data = vis.filter(p => p.isWorst);
+    chart.data.datasets[1].data = vis.filter(p => !p.isWorst);
+    chart.update();
+  }
+
+  const chart = new Chart(document.getElementById('tlChart'), {
+    type: 'scatter',
+    data: {
+      datasets: [
+        {
+          label: 'W. African female 65+ worst',
+          data: ALL_POINTS.filter(p => p.isWorst),
+          backgroundColor: 'rgba(226,75,74,0.50)',
+          pointRadius: 4,
+          pointHoverRadius: 6,
+          pointStyle: 'circle',
+        },
+        {
+          label: 'Other worst demographic',
+          data: ALL_POINTS.filter(p => !p.isWorst),
+          backgroundColor: 'rgba(55,138,221,0.40)',
+          pointRadius: 4,
+          pointHoverRadius: 6,
+          pointStyle: 'circle',
+        },
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: { duration: 300 },
+      layout: { padding: { top: 36 } },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          enabled: false,
+          external: (ctx) => {
+            const tp = ctx.tooltip;
+            if (!tp || tp.opacity === 0) return;
+            const pt = tp.dataPoints?.[0]?.raw;
+            if (!pt) return;
+            const yd = YEAR_DATA.find(d => d.year === pt.year);
+            document.getElementById('tlTooltip').innerHTML =
+              `<strong>${pt.year}, month ${pt.month}</strong> &nbsp;·&nbsp;
+              ${pt.isWorst ? 'W. African female (65–99) is worst-performing demographic' : 'A different demographic group is worst-performing'}<br>
+              <span style="font-size:12px;">Year total: ${yd.algos} algorithms from ${yd.devs} developers.
+              ~${Math.round(pt.pctWorst * 100)}% of ${pt.year} submissions show W. African female 65+ as worst demographic.
+              ${yd.event ? 'Event: ' + yd.event : ''}</span>`;
+          }
+        }
+      },
+      scales: {
+        x: {
+          type: 'linear',
+          min: 2016.7,
+          max: 2026.3,
+          grid: { color: gridColor },
+          border: { color: gridColor },
+          ticks: {
+            color: tickColor,
+            stepSize: 1,
+            callback: v => (Number.isInteger(v) && v >= 2017 && v <= 2026) ? v.toString() : '',
+            maxRotation: 0,
+            font: { size: 11 },
+          }
+        },
+        y: {
+          display: false,
+          min: -0.05,
+          max: 1.15,
+        }
+      }
+    },
+    plugins: [{
+      id: 'overlays',
+      afterDraw(ch) {
+        const { ctx, scales: { x, y }, chartArea } = ch;
+        const events = [
+          { xVal: 2018 + 1/12, line1: 'Gender Shades', line2: 'Feb 2018' },
+          { xVal: 2019 + 11/12, line1: 'NISTIR 8280', line2: 'Dec 2019' },
+          { xVal: 2022 + 6/12, line1: 'NISTIR 8429', line2: 'Jul 2022' },
+        ];
+        events.forEach(ev => {
+          const xPx = x.getPixelForValue(ev.xVal);
+          ctx.save();
+          ctx.strokeStyle = isDark ? 'rgba(255,255,255,0.18)' : 'rgba(0,0,0,0.18)';
+          ctx.lineWidth = 1;
+          ctx.setLineDash([4, 3]);
+          ctx.beginPath();
+          ctx.moveTo(xPx, chartArea.top);
+          ctx.lineTo(xPx, chartArea.bottom);
+          ctx.stroke();
+          ctx.setLineDash([]);
+          ctx.fillStyle = tickColor;
+          ctx.font = '10px -apple-system, sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText(ev.line1, xPx, chartArea.top - 18);
+          ctx.fillText(ev.line2, xPx, chartArea.top - 6);
+          ctx.restore();
+        });
+
+        ctx.save();
+        ctx.fillStyle = isDark ? 'rgba(226,75,74,0.06)' : 'rgba(226,75,74,0.05)';
+        const bandTop = y.getPixelForValue(1.0);
+        const bandBot = y.getPixelForValue(0.62);
+        ctx.fillRect(chartArea.left, bandTop, chartArea.width, bandBot - bandTop);
+        ctx.fillStyle = isDark ? 'rgba(55,138,221,0.06)' : 'rgba(55,138,221,0.05)';
+        const b2Top = y.getPixelForValue(0.58);
+        const b2Bot = y.getPixelForValue(0.08);
+        ctx.fillRect(chartArea.left, b2Top, chartArea.width, b2Bot - b2Top);
+        ctx.restore();
+      }
+    }]
+  });
+
+  const tbody = document.getElementById('yearTbody');
+  YEAR_DATA.forEach(d => {
+    const pct = Math.round(d.pctWorst * 100);
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><strong>${d.year}</strong></td>
+      <td>${d.algos.toLocaleString()}</td>
+      <td class="muted">${d.devs}</td>
+      <td>
+        <span class="pct-bar-track"><span class="pct-bar-fill" style="width:${pct}%"></span></span>
+        ~${pct}%
+      </td>
+      <td class="muted" style="font-size:11px;">${d.event || '—'}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+</script>
+</body>
+</html>

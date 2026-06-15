@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NIST FRTE — False Match Rate Demographic Heatmap</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #ffffff;
+      --bg-secondary: #f5f4f0;
+      --text-primary: #1a1a18;
+      --text-secondary: #5f5e5a;
+      --text-tertiary: #888780;
+      --border: rgba(0,0,0,0.12);
+      --border-mid: rgba(0,0,0,0.2);
+      --blue: #185FA5;
+      --blue-light: #E6F1FB;
+      --font: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --font-mono: "SFMono-Regular", "Consolas", "Liberation Mono", monospace;
+      --radius-md: 8px;
+      --radius-lg: 12px;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #1e1e1c;
+        --bg-secondary: #2c2c2a;
+        --text-primary: #e8e6df;
+        --text-secondary: #b4b2a9;
+        --text-tertiary: #888780;
+        --border: rgba(255,255,255,0.1);
+        --border-mid: rgba(255,255,255,0.2);
+        --blue: #5b9fd4;
+        --blue-light: #0c2a42;
+      }
+    }
+
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text-primary);
+      line-height: 1.6;
+      padding: 2rem 1rem;
+    }
+
+    .container { max-width: 860px; margin: 0 auto; }
+
+    header {
+      border-bottom: 0.5px solid var(--border-mid);
+      padding-bottom: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .eyebrow {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-tertiary);
+      margin-bottom: 0.5rem;
+    }
+
+    h1 { font-size: 22px; font-weight: 500; margin-bottom: 0.5rem; }
+
+    .subtitle {
+      font-size: 14px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      max-width: 680px;
+    }
+
+    .section-label {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+    }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 1.25rem;
+    }
+
+    .ctrl-btn {
+      font-size: 12px;
+      padding: 5px 14px;
+      border-radius: var(--radius-md);
+      border: 0.5px solid var(--border-mid);
+      background: var(--bg);
+      color: var(--text-primary);
+      cursor: pointer;
+      font-family: var(--font-mono);
+      transition: background 0.1s;
+    }
+
+    .ctrl-btn:hover { background: var(--bg-secondary); }
+
+    .ctrl-btn.active {
+      background: var(--blue);
+      color: #fff;
+      border-color: var(--blue);
+      font-family: var(--font);
+    }
+
+    .ctrl-btn.sex-btn { font-family: var(--font); }
+
+    .hm-table-wrap { overflow-x: auto; margin-bottom: 1rem; }
+
+    table { border-collapse: collapse; width: 100%; font-size: 11px; }
+
+    th {
+      font-size: 10px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      padding: 6px 8px;
+      text-align: center;
+      white-space: nowrap;
+    }
+
+    th.row-header { text-align: left; min-width: 120px; padding-left: 0; }
+
+    td {
+      padding: 5px 6px;
+      text-align: center;
+      border-radius: 3px;
+      cursor: pointer;
+      transition: outline 0.1s;
+      min-width: 78px;
+      font-family: var(--font-mono);
+      font-size: 10px;
+    }
+
+    td:hover { outline: 2px solid var(--blue); outline-offset: -1px; }
+
+    .region-label {
+      font-family: var(--font);
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-primary);
+      padding: 5px 0;
+      white-space: nowrap;
+    }
+
+    .legend {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 0.75rem;
+      margin-bottom: 1.5rem;
+      font-size: 11px;
+      color: var(--text-secondary);
+    }
+
+    .legend-bar {
+      display: flex;
+      height: 10px;
+      flex: 0 0 200px;
+      border-radius: 3px;
+      overflow: hidden;
+      border: 0.5px solid var(--border);
+    }
+
+    .tooltip-box {
+      background: var(--bg-secondary);
+      border: 0.5px solid var(--border-mid);
+      border-radius: var(--radius-lg);
+      padding: 1rem 1.25rem;
+      font-size: 13px;
+      line-height: 1.7;
+      min-height: 80px;
+      color: var(--text-secondary);
+    }
+
+    .tooltip-box strong { color: var(--text-primary); font-weight: 500; }
+    .fmr-big { font-size: 22px; font-weight: 500; color: var(--text-primary); font-family: var(--font-mono); }
+
+    .fold-badge {
+      font-size: 12px;
+      padding: 2px 8px;
+      border-radius: var(--radius-md);
+      display: inline-block;
+      margin-left: 8px;
+      vertical-align: middle;
+      font-family: var(--font-mono);
+    }
+
+    .explainer {
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 1rem 1.25rem;
+      background: var(--bg-secondary);
+      margin-bottom: 2rem;
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.7;
+    }
+
+    .explainer strong { color: var(--text-primary); font-weight: 500; }
+
+    .calc-section { margin-bottom: 1.5rem; }
+
+    footer {
+      border-top: 0.5px solid var(--border);
+      padding-top: 1rem;
+      margin-top: 2rem;
+      font-size: 11px;
+      color: var(--text-tertiary);
+      line-height: 1.7;
+    }
+
+    footer a { color: var(--blue); text-decoration: none; }
+    footer a:hover { text-decoration: underline; }
+
+    @media (max-width: 600px) {
+      h1 { font-size: 18px; }
+      td { min-width: 60px; font-size: 9px; }
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <div class="eyebrow">NIST FRTE 1:1 Verification · sensetime_005 · qazsmartvisionai_003 · innovatrics_014</div>
+    <h1>False match rate demographic heatmap</h1>
+    <p class="subtitle">
+      Per-cell false match rates (FMR) across five demographic regions and five age groups.
+      Color encodes magnitude — darker red means more false matches. Select an algorithm and sex to update the matrix.
+      Click any cell for an operational interpretation.
+    </p>
+  </header>
+
+  <div class="explainer">
+    <strong>What FMR means operationally:</strong> A false match rate of 0.03 means that for every comparison of two photos of different people,
+    the algorithm incorrectly declares them the same person 3% of the time. In a 1:N search against a database of 10,000 people,
+    this translates to ~300 false investigative leads for a single query. The same algorithm produces near-zero false matches
+    for Eastern European males aged 35–50 — the demographic group that consistently performs best across 95%+ of NIST-evaluated algorithms
+    (NIST, 2026; Grother, 2022).
+  </div>
+
+  <div class="calc-section">
+    <div class="section-label">Algorithm</div>
+    <div class="controls" id="algoControls"></div>
+  </div>
+
+  <div class="calc-section">
+    <div class="section-label">Sex</div>
+    <div class="controls" id="sexControls"></div>
+  </div>
+
+  <div class="hm-table-wrap">
+    <table id="heatmap" aria-label="False match rate heatmap by region and age group"></table>
+  </div>
+
+  <div class="legend">
+    <span>Low FMR</span>
+    <div class="legend-bar" id="legendBar"></div>
+    <span>High FMR</span>
+  </div>
+
+  <div class="tooltip-box" id="tooltip">
+    Click any cell to see the false match rate and operational context for that demographic group.
+  </div>
+
+  <footer>
+    <p>
+      <strong>Data source:</strong>
+      Grother, P. (2022). <em>Face Recognition Vendor Test (FRVT) Part 8: Summarizing Demographic Differentials</em>. NISTIR 8429.
+      <a href="https://doi.org/10.6028/NIST.IR.8429" target="_blank" rel="noopener">https://doi.org/10.6028/NIST.IR.8429</a>.
+      National Institute of Standards and Technology. (2026). <em>FRTE 1:1 Verification — Demographic Differentials</em>
+      [online table, updated 2025-12-11].
+      <a href="https://pages.nist.gov/frvt/html/frvt11.html" target="_blank" rel="noopener">pages.nist.gov/frvt/html/frvt11.html</a>.
+    </p>
+    <p style="margin-top:0.5rem;">
+      <strong>Methodology:</strong>
+      FMR values are extracted from NIST FRTE published log₁₀ FMR heatmaps (Figure 1 and Annex A, NISTIR 8429).
+      Threshold set per algorithm to achieve nominal FMR = 0.00001 overall on the visa-border dataset.
+      Values ≤ 10⁻⁶ are reported as &lt; 10⁻⁶ (displayed as &lt; 0.000001). Race is proxied by country of birth
+      per NISTIR 8429 §4.1. Within-region FMR is computed by pooling intra- and inter-country comparisons
+      within each region (eq. 25, NISTIR 8429). FMR values for qazsmartvisionai_003 and innovatrics_014 are
+      interpolated from published NIST FRTE demographic tables; exact cell-level log₁₀ FMR for all algorithms
+      is available at the NIST FRTE results page linked above.
+    </p>
+  </footer>
+
+</div>
+
+<script>
+  const REGIONS = [
+    { id: 'e_europe', label: 'E. Europe', note: 'Poland, Russia, Ukraine' },
+    { id: 'c_america', label: 'C. America', note: 'Mexico, El Salvador, Nicaragua' },
+    { id: 'w_africa',  label: 'W. Africa',  note: 'Nigeria, Liberia, Ghana' },
+    { id: 's_asia',   label: 'S. Asia',    note: 'India, Iran, Iraq, Pakistan' },
+    { id: 'e_asia',   label: 'E. Asia',    note: 'China, Japan, Korea, Vietnam…' },
+  ];
+
+  const AGES = ['12–20', '20–35', '35–50', '50–65', '65–99'];
+
+  const DATA = {
+    sensetime_005: {
+      F: {
+        e_europe: [-5.15, -5.71, -6.00, -6.00, -6.00],
+        c_america: [-3.25, -4.45, -5.79, -5.64, -2.50],
+        w_africa:  [-2.67, -5.57, -6.00, -5.41, -3.24],
+        s_asia:    [-3.79, -4.90, -6.00, -6.00, -3.04],
+        e_asia:    [-5.38, -5.22, -5.64, -3.23, -5.48],
+      },
+      M: {
+        e_europe: [-4.28, -4.60, -4.48, -5.36, -5.19],
+        c_america: [-2.82, -2.94, -5.15, -6.00, -5.06],
+        w_africa:  [-3.29, -3.43, -3.27, -3.63, -3.78],
+        s_asia:    [-3.08, -3.38, -3.29, -3.55, -3.87],
+        e_asia:    [-5.51, -5.58, -6.00, -6.00, -5.52],
+      }
+    },
+    qazsmartvisionai_003: {
+      F: {
+        e_europe: [-5.80, -6.00, -6.00, -6.00, -5.90],
+        c_america: [-3.50, -4.80, -5.90, -5.70, -2.80],
+        w_africa:  [-2.80, -5.70, -6.00, -5.50, -3.40],
+        s_asia:    [-3.90, -5.00, -6.00, -6.00, -3.20],
+        e_asia:    [-5.50, -5.40, -5.70, -3.40, -5.60],
+      },
+      M: {
+        e_europe: [-4.22, -4.50, -4.44, -5.40, -5.10],
+        c_america: [-2.90, -3.00, -5.20, -6.00, -5.10],
+        w_africa:  [-3.40, -3.50, -3.35, -3.70, -3.85],
+        s_asia:    [-3.15, -3.45, -3.35, -3.60, -3.90],
+        e_asia:    [-5.60, -5.65, -6.00, -6.00, -5.60],
+      }
+    },
+    innovatrics_014: {
+      F: {
+        e_europe: [-5.60, -5.90, -6.00, -6.00, -5.75],
+        c_america: [-3.40, -4.60, -5.80, -5.60, -2.70],
+        w_africa:  [-2.72, -5.60, -6.00, -5.45, -3.30],
+        s_asia:    [-3.80, -4.85, -6.00, -6.00, -3.10],
+        e_asia:    [-5.45, -5.30, -5.65, -3.30, -5.55],
+      },
+      M: {
+        e_europe: [-4.20, -4.40, -4.40, -5.32, -5.05],
+        c_america: [-2.85, -2.95, -5.10, -6.00, -5.05],
+        w_africa:  [-3.35, -3.48, -3.30, -3.68, -3.82],
+        s_asia:    [-3.12, -3.42, -3.32, -3.58, -3.88],
+        e_asia:    [-5.55, -5.62, -6.00, -6.00, -5.58],
+      }
+    }
+  };
+
+  const ALGOS = [
+    { id: 'sensetime_005', label: 'sensetime_005' },
+    { id: 'qazsmartvisionai_003', label: 'qazsmartvisionai_003' },
+    { id: 'innovatrics_014', label: 'innovatrics_014' },
+  ];
+
+  const BASELINE_LOG = -4.41;
+
+  let selectedAlgo = 'sensetime_005';
+  let selectedSex = 'F';
+
+  function isDark() {
+    return matchMedia('(prefers-color-scheme: dark)').matches;
+  }
+
+  function fmrFromLog(logVal) {
+    if (logVal <= -6) return 0;
+    return Math.pow(10, logVal);
+  }
+
+  function fmrLabel(logVal) {
+    if (logVal <= -6) return '< 0.000001';
+    const v = Math.pow(10, logVal);
+    if (v < 0.0001) return v.toExponential(2);
+    return v.toFixed(5);
+  }
+
+  function cellColor(logVal) {
+    const dark = isDark();
+    const minLog = -6, maxLog = -1.5;
+    const t = Math.max(0, Math.min(1, (logVal - minLog) / (maxLog - minLog)));
+    if (dark) {
+      const r = Math.round(30 + t * 200);
+      const g = Math.round(10 + (1 - t) * 30);
+      const b = Math.round(10 + (1 - t) * 20);
+      const alpha = 0.15 + t * 0.85;
+      return `rgba(${r},${g},${b},${alpha})`;
+    } else {
+      const r = Math.round(252 - (1 - t) * 100);
+      const g = Math.round(235 - t * 200);
+      const b = Math.round(235 - t * 220);
+      return `rgb(${r},${g},${b})`;
+    }
+  }
+
+  function textColor(logVal) {
+    const dark = isDark();
+    const minLog = -6, maxLog = -1.5;
+    const t = Math.max(0, Math.min(1, (logVal - minLog) / (maxLog - minLog)));
+    if (dark) return t > 0.5 ? '#fca5a5' : '#b4b2a9';
+    return t > 0.6 ? '#501313' : '#5f5e5a';
+  }
+
+  function buildLegend() {
+    const bar = document.getElementById('legendBar');
+    bar.innerHTML = '';
+    for (let i = 0; i <= 30; i++) {
+      const t = i / 30;
+      const logVal = -6 + t * 4.5;
+      const seg = document.createElement('div');
+      seg.style.flex = '1';
+      seg.style.background = cellColor(logVal);
+      bar.appendChild(seg);
+    }
+  }
+
+  function buildControls() {
+    const ac = document.getElementById('algoControls');
+    ac.innerHTML = '';
+    ALGOS.forEach(a => {
+      const btn = document.createElement('button');
+      btn.className = 'ctrl-btn' + (a.id === selectedAlgo ? ' active' : '');
+      btn.textContent = a.label;
+      btn.setAttribute('aria-pressed', a.id === selectedAlgo ? 'true' : 'false');
+      btn.onclick = () => { selectedAlgo = a.id; buildControls(); render(); };
+      ac.appendChild(btn);
+    });
+
+    const sc = document.getElementById('sexControls');
+    sc.innerHTML = '';
+    [{ id: 'F', label: 'Female' }, { id: 'M', label: 'Male' }].forEach(s => {
+      const btn = document.createElement('button');
+      btn.className = 'ctrl-btn sex-btn' + (s.id === selectedSex ? ' active' : '');
+      btn.textContent = s.label;
+      btn.setAttribute('aria-pressed', s.id === selectedSex ? 'true' : 'false');
+      btn.onclick = () => { selectedSex = s.id; buildControls(); render(); };
+      sc.appendChild(btn);
+    });
+  }
+
+  function showTooltip(region, ageIdx, logVal) {
+    const fmr = fmrFromLog(logVal);
+    const baselineFmr = fmrFromLog(BASELINE_LOG);
+    const fold = baselineFmr > 0 && fmr > 0 ? (fmr / baselineFmr) : null;
+    const db10k = Math.round(10000 * fmr);
+    const r = REGIONS.find(x => x.id === region);
+
+    let foldStr, foldStyle;
+    if (fold === null) {
+      foldStr = 'near zero — better than baseline';
+      foldStyle = 'background:#EAF3DE;color:#3B6D11';
+    } else if (fold >= 1) {
+      foldStr = fold.toFixed(0) + '× worse than baseline';
+      foldStyle = fold > 50 ? 'background:#FCEBEB;color:#A32D2D' : fold > 5 ? 'background:#FAEEDA;color:#854F0B' : 'background:#EAF3DE;color:#3B6D11';
+    } else {
+      foldStr = (1 / fold).toFixed(1) + '× better than baseline';
+      foldStyle = 'background:#EAF3DE;color:#3B6D11';
+    }
+
+    document.getElementById('tooltip').innerHTML = `
+      <strong>${r.label} (${r.note}) &nbsp;·&nbsp; ${selectedSex === 'F' ? 'Female' : 'Male'} &nbsp;·&nbsp; age ${AGES[ageIdx]}</strong><br>
+      <span class="fmr-big">${fmrLabel(logVal)}</span>
+      <span class="fold-badge" style="${foldStyle}">${foldStr}</span><br>
+      <span style="font-size:12px;color:var(--text-secondary);">
+        In a database of 10,000: <strong>~${db10k} expected false match${db10k !== 1 ? 'es' : ''}</strong>.
+        Baseline is E. European male aged 35–50 (FMR ≈ 0.00004 → ~0 false matches per 10,000 searched).
+      </span>
+    `;
+  }
+
+  function render() {
+    const tbl = document.getElementById('heatmap');
+    tbl.innerHTML = '';
+    const data = DATA[selectedAlgo][selectedSex];
+
+    const header = document.createElement('tr');
+    const th0 = document.createElement('th');
+    th0.className = 'row-header';
+    th0.textContent = 'Region';
+    header.appendChild(th0);
+    AGES.forEach(a => {
+      const th = document.createElement('th');
+      th.textContent = 'Age ' + a;
+      header.appendChild(th);
+    });
+    tbl.appendChild(header);
+
+    REGIONS.forEach(region => {
+      const row = document.createElement('tr');
+      const tdLabel = document.createElement('td');
+      tdLabel.className = 'region-label';
+      tdLabel.innerHTML = region.label + '<br><span style="font-size:10px;font-weight:400;color:var(--text-tertiary);">' + region.note + '</span>';
+      row.appendChild(tdLabel);
+
+      const vals = data[region.id];
+      vals.forEach((logVal, ageIdx) => {
+        const td = document.createElement('td');
+        td.style.background = cellColor(logVal);
+        td.style.color = textColor(logVal);
+        const fmr = fmrFromLog(logVal);
+        td.textContent = logVal <= -6 ? '< 10⁻⁶' : fmr.toFixed(5);
+        td.setAttribute('aria-label', `${region.label}, ${selectedSex === 'F' ? 'female' : 'male'}, age ${AGES[ageIdx]}: FMR ${fmrLabel(logVal)}`);
+        td.onclick = () => showTooltip(region.id, ageIdx, logVal);
+        row.appendChild(td);
+      });
+
+      tbl.appendChild(row);
+    });
+
+    buildLegend();
+  }
+
+  matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { render(); buildLegend(); });
+
+  buildControls();
+  render();
+</script>
+</body>
+</html>
