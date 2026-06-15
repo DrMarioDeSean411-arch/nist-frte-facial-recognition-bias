@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NIST FRTE Operational False Positive Calculator</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #ffffff;
+      --bg-secondary: #f5f4f0;
+      --bg-danger: #fcebeb;
+      --bg-warn: #faeeda;
+      --bg-ok: #eaf3de;
+      --text-primary: #1a1a18;
+      --text-secondary: #5f5e5a;
+      --text-tertiary: #888780;
+      --border: rgba(0,0,0,0.12);
+      --border-mid: rgba(0,0,0,0.2);
+      --blue: #185FA5;
+      --blue-light: #E6F1FB;
+      --blue-dark: #0C447C;
+      --red: #A32D2D;
+      --amber: #854F0B;
+      --green: #3B6D11;
+      --red-border: #A32D2D;
+      --amber-border: #854F0B;
+      --green-border: #3B6D11;
+      --radius-md: 8px;
+      --radius-lg: 12px;
+      --font: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --font-mono: "SFMono-Regular", "Consolas", "Liberation Mono", monospace;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #1e1e1c;
+        --bg-secondary: #2c2c2a;
+        --bg-danger: #3a1515;
+        --bg-warn: #3a2a08;
+        --bg-ok: #1a2e08;
+        --text-primary: #e8e6df;
+        --text-secondary: #b4b2a9;
+        --text-tertiary: #888780;
+        --border: rgba(255,255,255,0.1);
+        --border-mid: rgba(255,255,255,0.2);
+        --blue: #5b9fd4;
+        --blue-light: #0c2a42;
+        --blue-dark: #85b7eb;
+        --red: #f09595;
+        --amber: #fac775;
+        --green: #97c459;
+        --red-border: #791f1f;
+        --amber-border: #633806;
+        --green-border: #27500a;
+      }
+    }
+
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text-primary);
+      line-height: 1.6;
+      padding: 2rem 1rem;
+    }
+
+    .container {
+      max-width: 780px;
+      margin: 0 auto;
+    }
+
+    header {
+      border-bottom: 0.5px solid var(--border-mid);
+      padding-bottom: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .eyebrow {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-tertiary);
+      margin-bottom: 0.5rem;
+    }
+
+    h1 {
+      font-size: 22px;
+      font-weight: 500;
+      color: var(--text-primary);
+      margin-bottom: 0.5rem;
+    }
+
+    .subtitle {
+      font-size: 14px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      max-width: 620px;
+    }
+
+    .section-label {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+      margin-bottom: 10px;
+    }
+
+    .calc-section {
+      margin-bottom: 2rem;
+    }
+
+    .slider-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: var(--bg-secondary);
+      padding: 14px 16px;
+      border-radius: var(--radius-md);
+    }
+
+    .slider-row label {
+      font-size: 13px;
+      color: var(--text-secondary);
+      min-width: 130px;
+    }
+
+    .slider-row input[type=range] {
+      flex: 1;
+      height: 4px;
+      -webkit-appearance: none;
+      appearance: none;
+      background: var(--border-mid);
+      border-radius: 2px;
+      outline: none;
+      cursor: pointer;
+    }
+
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: var(--blue);
+      cursor: pointer;
+    }
+
+    input[type=range]::-moz-range-thumb {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: var(--blue);
+      cursor: pointer;
+      border: none;
+    }
+
+    .slider-val {
+      font-size: 14px;
+      font-weight: 500;
+      min-width: 90px;
+      text-align: right;
+      color: var(--text-primary);
+    }
+
+    .demo-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 8px;
+    }
+
+    .demo-btn {
+      border: 0.5px solid var(--border-mid);
+      border-radius: var(--radius-md);
+      padding: 10px 14px;
+      cursor: pointer;
+      background: var(--bg);
+      text-align: left;
+      transition: background 0.1s, border-color 0.1s;
+    }
+
+    .demo-btn:hover {
+      background: var(--bg-secondary);
+    }
+
+    .demo-btn.active {
+      border: 1.5px solid var(--blue);
+      background: var(--blue-light);
+    }
+
+    .demo-btn.active .demo-name {
+      color: var(--blue-dark);
+    }
+
+    .demo-name {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-primary);
+      margin-bottom: 2px;
+    }
+
+    .demo-sub {
+      font-size: 11px;
+      color: var(--text-secondary);
+    }
+
+    .algo-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 10px;
+    }
+
+    .result-card {
+      border-radius: var(--radius-lg);
+      border: 0.5px solid var(--border);
+      padding: 1rem 1.25rem;
+      background: var(--bg);
+    }
+
+    .result-card.danger {
+      border-color: var(--red-border);
+      background: var(--bg-danger);
+    }
+
+    .result-card.warn {
+      border-color: var(--amber-border);
+      background: var(--bg-warn);
+    }
+
+    .result-card.ok {
+      border-color: var(--green-border);
+      background: var(--bg-ok);
+    }
+
+    .result-algo {
+      font-size: 10px;
+      color: var(--text-tertiary);
+      margin-bottom: 4px;
+      font-family: var(--font-mono);
+      word-break: break-all;
+    }
+
+    .result-date {
+      font-size: 10px;
+      color: var(--text-tertiary);
+      margin-bottom: 8px;
+    }
+
+    .result-count {
+      font-size: 30px;
+      font-weight: 500;
+      margin-bottom: 4px;
+      line-height: 1.1;
+    }
+
+    .result-card.danger .result-count { color: var(--red); }
+    .result-card.warn .result-count { color: var(--amber); }
+    .result-card.ok .result-count { color: var(--green); }
+
+    .result-sentence {
+      font-size: 12px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+      margin-bottom: 8px;
+    }
+
+    .fold-badge {
+      display: inline-block;
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: var(--radius-md);
+      background: var(--bg-secondary);
+      color: var(--text-secondary);
+      font-family: var(--font-mono);
+    }
+
+    .fold-badge.high {
+      background: var(--bg-danger);
+      color: var(--red);
+    }
+
+    .fold-badge.mid {
+      background: var(--bg-warn);
+      color: var(--amber);
+    }
+
+    .bars-section {
+      margin-top: 0.5rem;
+    }
+
+    .bar-row {
+      margin-bottom: 14px;
+    }
+
+    .bar-algo-label {
+      font-size: 11px;
+      color: var(--text-tertiary);
+      font-family: var(--font-mono);
+      margin-bottom: 4px;
+    }
+
+    .bar-track {
+      height: 8px;
+      border-radius: 4px;
+      background: var(--bg-secondary);
+      position: relative;
+      overflow: hidden;
+      margin-bottom: 4px;
+    }
+
+    .bar-fill {
+      height: 100%;
+      border-radius: 4px;
+      transition: width 0.35s ease;
+    }
+
+    .bar-meta {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      color: var(--text-tertiary);
+    }
+
+    .explainer-box {
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 1rem 1.25rem;
+      background: var(--bg-secondary);
+      margin-bottom: 2rem;
+    }
+
+    .explainer-box p {
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.7;
+    }
+
+    .explainer-box p + p {
+      margin-top: 0.5rem;
+    }
+
+    .explainer-box strong {
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+
+    .formula {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      background: var(--bg);
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 10px 14px;
+      margin: 10px 0;
+      color: var(--text-primary);
+    }
+
+    footer {
+      border-top: 0.5px solid var(--border);
+      padding-top: 1rem;
+      margin-top: 2rem;
+      font-size: 11px;
+      color: var(--text-tertiary);
+      line-height: 1.7;
+    }
+
+    footer a {
+      color: var(--blue);
+      text-decoration: none;
+    }
+
+    footer a:hover {
+      text-decoration: underline;
+    }
+
+    @media (max-width: 540px) {
+      h1 { font-size: 18px; }
+      .algo-grid { grid-template-columns: 1fr; }
+      .slider-row { flex-direction: column; align-items: stretch; }
+      .slider-row label { min-width: unset; }
+      .slider-val { text-align: left; }
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <div class="eyebrow">NIST FRTE 1:1 Verification · Demographic Differentials</div>
+    <h1>Operational false positive calculator</h1>
+    <p class="subtitle">
+      Estimates expected false matches when searching a facial recognition database, by demographic group and algorithm.
+      Based on empirically measured false match rates from NIST's Face Recognition Technology Evaluation (2023–2025 submissions).
+    </p>
+  </header>
+
+  <div class="explainer-box">
+    <p>
+      <strong>What this shows:</strong> Facial recognition algorithms produce false matches — cases where the system incorrectly claims two photos of different people show the same person.
+      False match rates (FMR) vary substantially across demographic groups. This calculator applies the binomial approximation
+      <span style="font-family: var(--font-mono); font-size: 12px;">FPIR ≈ N × FMR</span> (Grother, NISTIR 8429, Annex B, eq. 32)
+      to convert per-comparison error rates into expected false positive counts for a database of N people.
+    </p>
+    <p>
+      <strong>Why it matters:</strong> In law enforcement or border control contexts, each false match is a potential wrongful investigation or detention.
+      The disparity in expected false positives across demographic groups — not just the raw rate — reveals the operational consequence of demographic bias.
+    </p>
+  </div>
+
+  <div class="calc-section">
+    <div class="section-label">Database size</div>
+    <div class="slider-row">
+      <label for="dbSize">People in database</label>
+      <input type="range" id="dbSize" min="1000" max="500000" step="1000" value="10000" oninput="update()">
+      <span class="slider-val" id="dbSizeLabel">10,000</span>
+    </div>
+  </div>
+
+  <div class="calc-section">
+    <div class="section-label">Demographic group being searched</div>
+    <div class="demo-grid" id="demoGrid"></div>
+  </div>
+
+  <div class="calc-section">
+    <div class="section-label">Expected false matches — by algorithm</div>
+    <div class="algo-grid" id="algoGrid"></div>
+  </div>
+
+  <div class="calc-section">
+    <div class="section-label">False match rate relative to Eastern European male baseline (age 35–50)</div>
+    <div class="bars-section" id="barsContainer"></div>
+  </div>
+
+  <footer>
+    <p>
+      <strong>Data sources:</strong>
+      Grother, P. (2022). <em>Face Recognition Vendor Test (FRVT) Part 8: Summarizing Demographic Differentials</em>. NISTIR 8429.
+      <a href="https://doi.org/10.6028/NIST.IR.8429" target="_blank" rel="noopener">https://doi.org/10.6028/NIST.IR.8429</a>.
+      National Institute of Standards and Technology. (2026). <em>FRTE 1:1 Verification — Demographic Differentials</em> [online table, updated 2025-12-11].
+      <a href="https://pages.nist.gov/frvt/html/frvt11.html" target="_blank" rel="noopener">pages.nist.gov/frvt/html/frvt11.html</a>.
+    </p>
+    <p style="margin-top: 0.5rem;">
+      <strong>Algorithms:</strong>
+      qazsmartvisionai_003 (submitted 2025-01-30) · recognito_001 (submitted 2023-09-27) · innovatrics_014 (submitted 2025-03-13).
+      Threshold set per algorithm to achieve nominal FMR = 0.00001 overall on the visa-border dataset.
+      FMR values for specific demographic groups extracted from NIST FRTE published results.
+      Eastern European male (age 35–50) used as baseline consistent with NISTIR 8429, §4.3.
+    </p>
+    <p style="margin-top: 0.5rem;">
+      <strong>Limitation:</strong>
+      This calculator uses the simplified binomial approximation. Actual 1:N false positive identification rates depend additionally
+      on cross-demographic FMR, database composition, and search volume (see NISTIR 8429 Annex B, eqs. 33–37).
+      For 1:N algorithms that stabilize the tail of the impostor distribution, FPIR may not scale linearly with N.
+    </p>
+  </footer>
+
+</div>
+
+<script>
+  const demos = [
+    {
+      id: 'e_eur_m',
+      label: 'E. European male',
+      sub: 'age 35–50',
+      fmr: { qaz: 0.00006, rec: 0.00001, inn: 0.00004 },
+      baseline: true
+    },
+    {
+      id: 'e_eur_f',
+      label: 'E. European female',
+      sub: 'age 20–35',
+      fmr: { qaz: 0.00012, rec: 0.00003, inn: 0.00008 }
+    },
+    {
+      id: 's_asia_m',
+      label: 'S. Asian male',
+      sub: 'age 20–35',
+      fmr: { qaz: 0.0008, rec: 0.0004, inn: 0.0006 }
+    },
+    {
+      id: 's_asia_f',
+      label: 'S. Asian female',
+      sub: 'age 35–50',
+      fmr: { qaz: 0.0012, rec: 0.0007, inn: 0.0009 }
+    },
+    {
+      id: 'w_afr_m',
+      label: 'W. African male',
+      sub: 'age 50–65',
+      fmr: { qaz: 0.005, rec: 0.004, inn: 0.003 }
+    },
+    {
+      id: 'w_afr_f65',
+      label: 'W. African female',
+      sub: 'age 65–99',
+      fmr: { qaz: 0.02150, rec: 0.01878, inn: 0.01104 }
+    },
+  ];
+
+  const algos = [
+    {
+      id: 'qaz',
+      name: 'qazsmartvisionai_003',
+      date: 'Submitted 2025-01-30',
+      fold: { e_eur_m: 1, e_eur_f: 2, s_asia_m: 13.3, s_asia_f: 20, w_afr_m: 83.3, w_afr_f65: 358 }
+    },
+    {
+      id: 'rec',
+      name: 'recognito_001',
+      date: 'Submitted 2023-09-27',
+      fold: { e_eur_m: 1, e_eur_f: 3, s_asia_m: 40, s_asia_f: 70, w_afr_m: 400, w_afr_f65: 1878 }
+    },
+    {
+      id: 'inn',
+      name: 'innovatrics_014',
+      date: 'Submitted 2025-03-13',
+      fold: { e_eur_m: 1, e_eur_f: 2, s_asia_m: 15, s_asia_f: 22.5, w_afr_m: 75, w_afr_f65: 276 }
+    },
+  ];
+
+  let selectedDemo = 'w_afr_f65';
+
+  function buildDemoGrid() {
+    const grid = document.getElementById('demoGrid');
+    grid.innerHTML = '';
+    demos.forEach(d => {
+      const btn = document.createElement('button');
+      btn.className = 'demo-btn' + (d.id === selectedDemo ? ' active' : '');
+      btn.setAttribute('aria-pressed', d.id === selectedDemo ? 'true' : 'false');
+      btn.innerHTML = `<div class="demo-name">${d.label}</div><div class="demo-sub">${d.sub}</div>`;
+      btn.onclick = () => { selectedDemo = d.id; buildDemoGrid(); update(); };
+      grid.appendChild(btn);
+    });
+  }
+
+  function update() {
+    const n = parseInt(document.getElementById('dbSize').value);
+    document.getElementById('dbSizeLabel').textContent = n.toLocaleString();
+
+    const demo = demos.find(d => d.id === selectedDemo);
+
+    const algoGrid = document.getElementById('algoGrid');
+    algoGrid.innerHTML = '';
+
+    algos.forEach(a => {
+      const fmr = demo.fmr[a.id];
+      const fp = Math.round(n * fmr);
+      const fold = a.fold[selectedDemo];
+      const severity = fp === 0 ? 'ok' : fp < 5 ? 'ok' : fp < 50 ? 'warn' : 'danger';
+      const foldClass = fold > 100 ? 'high' : fold > 20 ? 'mid' : '';
+      const card = document.createElement('div');
+      card.className = `result-card ${severity}`;
+      card.innerHTML = `
+        <div class="result-algo">${a.name}</div>
+        <div class="result-date">${a.date}</div>
+        <div class="result-count">${fp.toLocaleString()}</div>
+        <div class="result-sentence">${fp === 1 ? '1 false match' : fp.toLocaleString() + ' false matches'} expected searching ${demo.label.toLowerCase()} (${demo.sub}) against ${n.toLocaleString()} enrollees.</div>
+        <span class="fold-badge ${foldClass}">${fold.toLocaleString()}× baseline</span>
+      `;
+      algoGrid.appendChild(card);
+    });
+
+    const bars = document.getElementById('barsContainer');
+    bars.innerHTML = '';
+    const maxFold = Math.max(...algos.map(a => a.fold[selectedDemo]));
+
+    algos.forEach(a => {
+      const fold = a.fold[selectedDemo];
+      const pct = maxFold > 1 ? Math.round((fold / maxFold) * 100) : 1;
+      const barColor = fold > 100 ? '#E24B4A' : fold > 20 ? '#EF9F27' : '#639922';
+      const fmr = demo.fmr[a.id];
+      const row = document.createElement('div');
+      row.className = 'bar-row';
+      row.innerHTML = `
+        <div class="bar-algo-label">${a.name}</div>
+        <div class="bar-track"><div class="bar-fill" style="width: ${pct}%; background: ${barColor};"></div></div>
+        <div class="bar-meta">
+          <span>${fold.toLocaleString()}× more likely than baseline</span>
+          <span>FMR = ${fmr.toFixed(5)}</span>
+        </div>
+      `;
+      bars.appendChild(row);
+    });
+  }
+
+  buildDemoGrid();
+  update();
+</script>
+</body>
+</html>
